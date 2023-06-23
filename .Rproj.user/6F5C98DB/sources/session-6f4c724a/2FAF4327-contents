@@ -1,0 +1,1132 @@
+---
+title: "Remote Sensing and GIS"
+subtitle: "Handling Vector and Raster Data in  R"
+author: 
+    - Masumbuko Semba
+date: "June 23, 2023"
+institute: "The Nelson Mandela African Institution of Science and Technology"
+funding: "Courtesy of the R community and Posit for the tools and resource that are open and free for community"
+format:
+  html:
+    theme: cosmo
+  pdf:
+    documentclass: report
+    papersize: a4
+    highlight-style: ayu-mirage
+    fontsize: 12pt
+    linestretch: '1.2'
+    pdf-engine: xelatex
+    mainfont: Latin Modern Roman
+    sansfont: Latin Modern Roman
+    geometry:
+      - top=25.4mm
+      - left=25.4mm
+      - right=25.4mm
+      - bottom=25.4mm
+    number-sections: false
+    toc: true
+    lof: true
+    lot: true
+    toc-depth: 3
+    include-in-header: 
+      text: |
+        \usepackage{makeidx}
+        \makeindex
+        \usepackage{authblk}
+        \usepackage{float}
+        \floatplacement{table}{H}
+        \usepackage{datetime2}
+        \usepackage{fancyhdr}
+        \pagestyle{fancy} % set the page style to 'fancy'
+        \fancyhead{} % clear all header fields
+        \fancyhead[RO,LE]{\textbf{SEMBA} (Typeset \DTMnow)\\\textbf{Handling Spatial Data in R}}
+        \cfoot{\thepage}
+        %\fancyfoot{} % clear all footer fields
+        %\fancyfoot[LE,RO]{\thepage}
+        %\fancyfoot[LO,CE]{From: WIOMSA}
+        %\fancyfoot[CO,RE]{To: FAO}
+    include-after-body: 
+      text: |
+        \printindex
+
+documentclass: book
+toc: true
+toc-depth: 3
+number-sections: false
+highlight-style: ayu-mirage
+code-line-numbers: true
+code-fold: show
+theme: cosmo
+bibliography: ref.bib
+execute: 
+  warning: false
+  message: false
+appendix-style: plain 
+code-annotations: true
+css: style_mie.css
+---
+
+# Introduction
+
+This exercise provides an introductory overview of spatial data \index{Spatial}, but it only scratches the surface of this vast field. For a more comprehensive understanding and in-depth analysis\index{Analysis} of spatial data, it is recommended to refer to specialized reference books like *Geospatial Technology and Spatial Analysis in R* written by Masumbuko Semba \index{Semba}. This book delves into the intricacies of spatial data analysis, offering valuable insights and practical guidance. To access further details and explore the topic extensively, you can visit the following link: https://lugoga.github.io/spatialgoR/ch1.html. It serves as a valuable resource for expanding your knowledge and expertise in spatial data analysis.
+
+In addition to a book on *spatial data analysis \index{analysis} in R*, Semba has also written a book that focuses on handling spatial\index{Spatial} data in coastal and marine environmental contexts. Although the book has a specific focus, the concepts and methodologies discussed can be applied to other fields such as hydrology and related disciplines. The book offers valuable insights into effectively working with spatial\index{Spatial} data in coastal and marine environments.
+To access the book and explore its content, you can visit the following URL: https://lugoga.github.io/geomarine/intro.html. This resource serves as a useful reference for those interested in understanding and analyzing spatial\index{Spatial} data in the context of coastal and marine environments, while also offering potential applications in related fields.
+
+Furthermore, Semba maintains blogs and websites where he shares informative blog posts discussing solutions for handling, manipulating, visualizing, analyzing, and modeling both spatial\index{Spatial} and non-spatial\index{Spatial} data using R and Python programming languages. These resources also touch upon sharing information through web technologies and the development of data-driven and interactive web applications to support decision-making processes. Some of these blogs include "Ngara" (https://lugoga.github.io/semba-quarto/) and "Semba-Blog" (https://semba-blog.netlify.app/post/). Additionally, Semba has developed a web application that can be accessed at the following link: https://semba.shinyapps.io/vizingaApp/. These resources serve as valuable references for those interested in exploring data-related techniques and tools in the context of spatial\index{Spatial} and non-spatial data\index{Data} analysis\index{Analysis}, as well as web development for decision support applications.
+
+In this exercise, we will be using different types of spatial\index{Spatial} data\index{Data} to analyze\index{Analyse} the Arusha region in Tanzania. The point data represents randomly selected sampling points, the line shape represents rivers, and the polygon represents regions in Tanzania. Additionally, we will be using a raster\index{Raster} dataset of elevation in Tanzania. The data will be used for spatial\index{Spatial} analysis\index{Analysis}, which employs various techniques to analyze spatial\index{Spatial} data. This exercise will allow us to gain insights into the geography, hydrology, and other aspects of the Arusha region.
+
+This exercise gives the basics on installing [**R**](https://cran.r-project.org/) and [**RStudio**](https://www.rstudio.com/products/RStudio/), CRAN spatial\index{Spatial} Task Views and. Obviously, if you\'re already familiar with these topics then no need to go through that post. 
+
+
+Our focus will be on importing spatial\index{Spatial} data (vector\index{Vector} and raster\index{Raster}) into R and and explore them to understand thow the spatial\index{Spatial} data\index{Data} are handled and presented in this language. We will use different library such as sf, terra, tidyverse etc along with a few others to achieve our objectives.
+
+Our example will cover a range of topics, including installing R, Rstudio and packages, setting our working directory, importing data\index{Data}, plotting, visualizing spatial\index{Spatial} data\index{Data}, cropping, masking and derive derivatives of elevation dataset for Arusha region. 
+
+By the end of this session, you will have a solid understanding of how to work with vector and raster data\index{Data} in R and be able to apply these techniques to your own projects. So, let's dive in and get started!
+
+
+## File and folder management
+
+Project files and folders can get unwieldy fast, and can really bog you down and inhibit productivity when you don't know where your files are or what the latest version is. The two main considerations for addressing this issue are
+
+a)  defining a simple, common, intuitive **folder structure**, and
+b)  using informative **file names**.
+
+Your naming conventions should be:
+
+-   machine readable
+    -   i.e. avoid spaces and funny punctuation
+    -   support searching and splitting of names (e.g. "data_raw_precip.csv", "data_clean_precip.csv", "data_raw_species.csv" can all be searched by keywords and can be split by "\_" into 3 useful fields: type (data vs ot"er), class (raw vs clean), variable (precip vs species), etc)
+-   human readable
+    -   the contents should be self evident from the file name
+-   support sorting
+    -   i.e. use numeric or character prefixes to separate files into different components or steps (e.g. "data_raw_localities.csv", "data_clean_localities.csv", etc)
+    -   some of this can be handled with folder structure, but you don't want too many folders either
+
+Find out more about file naming [here](https://bookdown.org/content/d1e53ac9-28ce-472f-bc2c-f499f18264a3/names.html).
+
+
+
+## Coding and code management
+
+### **Why write code?**
+
+Working in point-and-click GUI-based software like Excel, Statistica, SPSS, etc may seem easier, but you'll regret it in the long run...
+
+The beauty of writing code lies in:
+
+-   **Automation**
+    -   You will inevitably have to adjust and repeat your analysis\index{Analysis} as you get feedback from supervisors, collaborators and reviewers. Rerunning code is one click, and you're unlikely to introduce errors. Rerunning analyses in GUI-based software is lots of clicks and it's easy to make mistakes, alter default settings, etc etc.
+    -   Next time you need to do the same analysis\index{Analysis} on a different dataset you can just copy, paste and tweak your code.
+-   You code/script provides a **record of your analysis**
+-   Linked to the above, mature scientific coding languages like Python or R allow you to **run almost any kind of analysis in one scripted workflow**, even if it has diverse components like GIS, phylogenetics, multivariate or Bayesian statistics, etc.
+    -   Most proprietary software are limited to one or a few specialized areas (e.g. ArcGIS, etc), which leaves you manually exporting and importing data between multiple software packages. This is very cumbersome, in addition to being a file-management nightmare...
+-   Most scripting environments are **open source** (e.g. R, Python, JavaScript, etc)
+    -   Anyone wanting to use your code doesn't have to pay for a software license
+    -   It's great for transparency - Lots of people can and have checked the background code and functions you're using, versus only the software owner's employees have access to the raw code for most analytical software
+    -   There's usually a culture of sharing code (online forums, with publications, etc)
+
+[Here's](https://fynbos.saeon.ac.za/docs/learningr/why-learn-r/) a motivation and some tutorials to help you learn R.
+
+
+
+### **Some coding rules**
+
+It's easy to write messy code. This can make it virtually indecipherable to others (and even yourself), slowing you and your collaborations down. It also makes it easy to make mistakes and not notice them. The overarching rule is to ***write code for people***, not computers. Check out the [Tidyverse style guide](https://style.tidyverse.org/index.html) for R-specific guidance, but here are some basic rules:
+
+-   use consistent, meaningful and distinct names for variables and functions
+-   use consistent code and formatting style
+-   use commenting to document and explain what you're doing at each step or in each function - purpose, inputs and outputs
+-   "notebooks" like RMarkdown or Jupyter Notebooks are very handy for fulfilling roles like documentation, master/makefiles etc and can be developed into reports or manuscripts
+-   write functions rather than repeating the same code
+-   modularize code into manageable steps/chunks
+    -   or even separate them into separate scripts that can all be called in order from a master script or Makefile
+-   check for mistakes at every step!!! Beyond errors or warnings, do the outputs make sense?
+-   start with a "recipe" that outlines the steps/modules (usually as commented headers etc). This is very valuable for keeping you organized and on track, e.g. a common recipe in R:
+    -   Header indicating purpose, author, date, version etc
+    -   Define settings
+    -   Load required libraries
+    -   Read in data
+    -   Wrangle/reformat/clean/summarize data as required
+    -   Run analyses (often multiple steps)
+    -   Wrangle/reformat/summarize analysis\index{Analysis} outputs for visualization
+    -   Visualize outputs as figures or tables
+-   avoid proprietary formats
+    -   i.e. use an open source scripting langauge and open source file formats only
+-   use version control!!!
+
+
+
+<!-- **Version control** -->
+
+<!-- Using version control tools like Git, SVN, etc can be challenging at first, but they can also hugely simplify your code development (and adaptation) process. While they were designed by software developers for software development, they are hugely useful for quantitative biology. -->
+
+<!-- I can't speak authoritatively on version control systems (I've only ever used Git and [GitHub](https://github.com/)), but here are the advantages as I see them. This version is specific to Git, but I imagine they all have similar functions and functionality: -->
+
+<!-- > Words in *italics* are technical terms used within GitHub. You can look them up [here](https://docs.github.com/en/get-started/quickstart). You'll also cover it in the brief tutorial you'll do when setting up your computer for the practical. -->
+
+<!-- -   They generally help project management, especially **collaborations** -->
+<!-- -   They allow you to **easily share code** with collaborators or the public at large - through *repositories* or *gists* (code snippets) -->
+<!-- -   Users can easily **adapt or build on each others' code** by *forking* repositories and working on their own *branch*. -->
+<!--     -   This is truly powerful!!! It allows you to **repeat/replicate analyses** but even build websites (like this one!), etc -->
+<!-- -   While the whole **system is online**, you **can also work offline** by *cloning* the *repository* to your local machine. Once you have a local version you can *push* to or *pull* from the online repository to keep everything updated -->
+<!-- -   **Changes are tracked and reversible** through *commits*. If you change the contents of a *repository* you must *commit* them and write a *commit message* before pulling or pushing to the online *repository*. Each *commit* is essentially a recoverable *version* that can be *compared* or *reverted* to -->
+<!--     -   This is **the essence of version control** and magically frees you from folders full of lists of files named "mycode_final.R", "mycode_finalfinal.R", "myfinalcode_finalfinal.R" etc as per Figure \@ref(fig:documentnaming) -->
+<!-- -   They allow collaborators or the public at large to **propose changes** via *pull requests* that allow you to *merge* their *forked branch* back to the *main (or master) branch* -->
+<!-- -   They allow you to **accept and integrate changes seamlessly** when you accept and merge *pull requests* -->
+<!-- -   They allow you to **keep written record of changes** through comments whenever a *commit* or *pull request* is made - these also track the user, date, time, etc and are useful for *blaming* when things go wrong -->
+<!-- -   There's a system for ***assigning*** **logging and tracking *issues* and *feature requests*** -->
+
+<!-- I'm sure this is all a bit much right now, but should make more sense after the practical... -->
+
+
+\newpage
+
+# Computing environment and software
+
+You've heard why you should **use open source software** whenever possible, but it bears repeating. Using proprietary software means that others have to purchase software, licenses, etc to build on your work and essentially makes it not reproducible by putting it behind a pay-wall. This is self-defeating...
+
+Another issue is that **software and hardware change with upgrades, new versions or changes in the preferences within user communities** (e.g. you'll all know MicroSoft Excel, but have you heard of Quattro Pro or Lotus that were the preferred spreadsheet software of yesteryear?).
+
+Just sharing your code, data and workflow does not make your work reproducible if we don't know what language the code is written in or if functions change or are deprecated in newer versions, breaking your code.
+
+The **simplest way** to avert this problem is to **carefully document the hardware and versions of software** used in your analyses so that others can recreate that computing environment if needed. This is very easy in R, because you can simply run the `sessionInfo()` function, like so:
+
+
+
+## Software installation and setup {#sec-software}
+
+For this exercise, we'll be using the [R](https://cran.r-project.org/) statistical programming language [@rlanguage]. We'll also be using an [integrated development environment (IDE)](https://en.wikipedia.org/wiki/Integrated_development_environment) for each: [RStudio](https://www.rstudio.com).
+
+::: callout-important
+***If you already have these installed and set up***, please make sure you have the latest versions, and check that your installations are working! Please also make sure you have installed (and/or updated) the [*Tidyverse*](https://www.tidyverse.org/) set of R packages. It can be installed using the code `install.packages("tidyverse")` and updated using `update.packages("tidyverse")`
+:::
+
+The installation and setup can be a bit long-winded, but once done you should be good to go until you change or reformat your computer. The steps below are my summary and (hopefully) more intuitive adaptation of the instructions provided for installing and run R and Rstudio in your machine.
+
+First we'll start with the necessary software.
+
+1.  Download and install the ***latest*** version of [R](https://cran.r-project.org/)
+2.  Download and install the ***latest*** free version of [RStudio Desktop](https://www.rstudio.com/products/rstudio/download/)
+3. Lastly, you need to install the packages we will need for this session. To begin with, we are going to install few packages, which include **tidyverse** [@tidyverse], **terra** [@terra], **sf** [@sf], and **tidyterra** [@tidyterra] packages. This can be done using the code:
+
+```r
+my.packages = c("tidyverse", "terra", "tidyterra", "sf")
+
+install.packages(my.packages)
+```
+
+## A quick note on the structure of this tutorial
+
+From here this tutorial will include embedded chunks of R code and the output that R returns in little grey boxes. The R code I call starts at the beginning of the line, while each line of R\'s output starts with \"##\", e.g.
+
+```         
+1+1
+```
+
+```         
+## [1] 2
+```
+
+Note that I occassionally include additional comments in the R chunks as one often does in normal R code. Comments are preceded by \"#\", e.g.
+
+```         
+1+1 #My comment
+```
+
+```         
+## [1] 2
+```
+
+Hopefully this will all make sense as you get into the tutorial...
+
+
+
+\newpage
+
+# Handling Spatial Data in R
+
+This tutorial will guide you through the process of importing and handling spatial\index{Spatial} data\index{Data} in R. We will cover how to import point, lines, polygon, and raster\index{Raster} data using the `sf` and `terra` packages. 
+
+spatial\index{Spatial} data\index{Data} refers to data that has a geographic component, such as point locations, lines, polygons, and raster\index{Raster} images. R is a powerful tool for handling and analyzing spatial\index{Spatial} data, with several packages available for importing, manipulating, and visualizing spatial\index{Spatial} data\index{Data}. In this tutorial, we will cover the basics of handling spatial\index{Spatial} data in R, starting with importing point, line, polygon, and raster\index{Raster} data.
+
+
+## Introduction Spatial Data 
+
+Spatial\index{Spatial} phenomena can generally be thought of as either discrete objects with clear boundaries or as a continuous phenomena that can be observed everywhere [@wior], but that do not have natural boundaries. Discrete spatial objects may refer to a river, road, country, town, or a research site. Examples of continuous phenomena, or “spatial\index{Spatial} fields”, include elevation, temperature, and air quality.
+
+Spatial objects are usually represented by vector\index{Vector} data [@geospatial]. Such data\index{Data} consists of a description of the “geometry” or “shape” of the objects [@geomarine], and normally also includes additional variables. For example, a vector data set may represent the borders of the countries of the world (geometry), and also store their names and the size of their population in 2015; or it may have the geometry of the roads in an area, as well as their type and names. These additional variables are often referred to as “attributes”. Continuous spatial\index{Spatial} data (fields) are usually represented with a raster\index{Raster} data structure. We discuss these two data types in turn.
+
+### Vector data
+
+The main vector\index{Vector} data\index{Data} types are points, lines and polygons [@sf; @geospatial]. In all cases, the geometry of these data structures consists of sets of coordinate pairs (x, y). Points are the simplest case. Each point has one coordinate pair, and n associated variables. For example, a point might represent a place where a rat was trapped, and the attributes could include the date it was captured, the person who captured it, the species size and sex, and information about the habitat. It is also possible to combine several points into a multi-point structure, with a single attribute record. For example, all the coffee shops in a town could be considered as a single geometry.
+
+The geometry of lines is a just a little bit more complex. First note that in this context, the term ‘line’ refers to a set of one or more polylines (connected series of line segments). For example, in spatial\index{Spatial} analysis\index{Analysis}, a river and all its tributaries could be considered as a single ‘line’ (but they could also also be several lines, perhaps one for each tributary river). Lines are represented as ordered sets of coordinates (nodes). The actual line segments can be computed (and drawn on a map) by connecting the points. Thus, the representation of a line is very similar to that of a multi-point structure. The main difference is that for a line the ordering of the points is important, because we need to know in which order the points should be connected.
+
+A network (e.g. a road or river network), or spatial\index{Spatial} graph, is a special type of lines geometry where there is additional information about things like flow, connectivity, direction, and distance.
+
+A polygon refers to a set of closed polylines. The geometry is very similar to that of lines, but to close a polygon the last coordinate pair coincides with the first pair. A complication with polygons is that they can have holes (that is a polygon entirely enclosed by another polygon, that serves to remove parts of the enclosing polygon (for example to show an island inside a lake. Also, valid polygons do not self-intersect (but it is OK for a line to self-cross). Again, multiple polygons can be considered as a single geometry. For example, Indonesia consists of many islands. Each island can be represented by a single polygon, but together then can be represent a single (multi-) polygon representing the entire country.
+
+### Raster data
+raster\index{Raster} data is commonly used to represent spatial\index{Spatial}ly continuous phenomena such as elevation [@terra]. A raster divides the world into a grid of equally sized rectangles (referred to as cells or, in the context of satellite remote sensing, pixels) that all have one or more values (or missing values) for the variables of interest [@geospatial]. A raster cell value should normally represent the average (or majority) value for the area it covers. However, in some cases the values are actually estimates for the center of the cell (in essence becoming a regular set of points with an attribute).
+
+In contrast to vector\index{Vector} data, in raster\index{Raster} data\index{Data} the geometry is not explicitly stored as coordinates. It is implicitly set by knowing the spatial\index{Spatial} extent and the number or rows and columns in which the area is divided [@tidyterra]. From the extent and number of rows and columns, the size of the raster cells (spatial\index{Spatial} resolution) can be computed. While raster cells can be thought of as a set of regular polygons, it would be very inefficient to represent the data\index{Data} that way as coordinates for each cell would have to be stored explicitly. Doing so would also dramatically increase processing time.
+
+
+## loading packages
+
+First, make sure you have the necessary packages installed and loaded on your machine. The packages we will be using are `sf`, `tidyverse`, and `terra`. You can install and load these packages using the following code in Rstudio:
+
+```r
+install.packages(c("sf", "tidyverse", "terra", "gt))
+
+```
+
+Then load them in our session using `library` function;
+
+```{r}
+
+library(sf)            # <1>
+library(tidyverse)    # <2>
+library(terra)        # <3>
+require(gt)           # <4>
+```
+
+1. load sf package
+2. load tidyverse package
+3. load terra and; then 
+4. load gt
+
+
+
+## Loading spatial Data
+### Point Data
+
+To import point data\index{Data} in R, we can use the **sf** package. This package provides a simple and efficient way to work with spatial\index{Spatial} data in R. To import point data from a shapefile, we can use the `st_read()` function. Here is an example code:
+
+
+```{r}
+sampling.points = st_read(            # <1>
+  dsn = "data/sampling_points.gpkg",  # <2>
+  quiet = TRUE                        # <3>
+  )
+```
+1. specify the function
+2. define the path and file
+3. prevent the document printing in console
+
+Let's us explore what is contained in the sampling points. It's important to remember that vector\index{Vector} data model should have a spatial\index{Spatial} dimension and an attribute information that describe the information of each feature
+
+```{r}
+sampling.points
+```
+
+
+### Line Data
+
+To import line data\index{Data} in R, we can use the same s`t_read()` function as for point data. Here is an example code:
+
+
+```{r}
+rivers = st_read("data/rivers.gpkg", quiet = TRUE)
+```
+
+
+```{r}
+rivers
+```
+
+
+
+### Polygon Data
+To import polygon data\index{Data} in R, we can use the same st_read() function as for point and line data. Here is an example code:
+
+```{r}
+regions = st_read("data/regions_poly.gpkg", quiet = TRUE)
+```
+
+
+```{r}
+
+regions
+
+```
+
+::: {#exm-sf}
+Which function within the sf package should be used to import vector\index{Vector} data modal in R?
+:::
+
+::: {.solution}
+To read simple feature spatial\index{Spatial} data\index{Data} into R, you can use the `st_read()` function from the **sf** package. This function can read spatial\index{Spatial} data from various file formats, including shapefiles, geopackages, GeoJSON, and KML files.
+:::
+
+
+### Raster Data
+
+To import raster\index{Raster} data in R, we can use the **terra** package. This package provides a fast and efficient way to work with raster data\index{Data} in R. To import a raster image from a file, we can use the *rast()* function. Here is an example code:
+
+```{r}
+
+elevation = rast("data/wc2.1_country/TZA_wc2.1_30s_elev.tif")
+elevation
+
+```
+
+
+::: {#exm-sf}
+Which function  in terra package is used to read and import raster\index{Raster} data modal in R?
+:::
+
+::: {.solution}
+The `rast()` function in the terra package is used to read raster datasets into R. It allows for the efficient loading and manipulation of raster data\index{Data}, providing access to various operations and analysis\index{Analysis} on the raster objects.
+:::
+
+
+## Visualizing Spatial Data
+
+### Plotting vector\index{Vector} Data Types
+
+Once we have imported our spatial\index{Spatial} data\index{Data} into R, we can manipulate it using various functions provided by the **sf** and **terra** packages. For example, we can plot our spatial\index{Spatial} data using the `plot()` function. Here is an example code:
+
+```{r}
+library(sf)
+
+stations = st_read("data/sampling_points.gpkg", quiet = TRUE)
+stations
+```
+
+The printed sampling station provide a metadata that describe the given data\index{Data} is a simple feature collection with 30 features and 1 field. The geometry type is a point, and the dimension is XY. The bounding box is defined by the minimum and maximum values of the x and y coordinates. The geodetic CRS is WGS 84. The data contains 30 points, each representing a station, with the name of the station and its corresponding latitude and longitude coordinates. The data can be plotted using `plot` function in R, the code in the chunk highlight;
+
+```{r}
+#| label: fig-sp1
+#| fig-cap: Sampling points plotted with plot function
+#| 
+stations |>
+  plot()
+```
+
+The plot function has plotted the sampling station by station name. Its not very clear here as the spatial\index{Spatial} information in the plot is missing. Though a `plot` function is useful for visualizing spatial\index{Spatial} data\index{Data} in R, but Plotting spatial\index{Spatial} data with **ggplot2** is more intuitive and is the one I prefer. This is because it use a concept of grammer of graphics (gg) and its code syntax are easy to read and follow. To plot any data in **ggplot2** [@ggplot], the key steps include
+
+1. Use the `ggplot()` function to initiate the plot and specify the data source.
+1. Add the desired layers to the plot using `geom_sf()` for spatial\index{Spatial} data.  **ggplot2** offers several `geoms_` for non-spatial data\index{Data}.
+1. Customize the plot using **ggplot2** functions such as `labs()`, `scale_()`, and `theme_()`.
+
+```{r}
+#| label: fig-sp2
+#| fig-cap: Sampling points plotted ggplot2 package
+#| 
+ggplot(data = stations) +
+  geom_sf()+
+  labs(title = "Sampling Points", 
+       subtitle = "Hyrological Sampling Stations", 
+       y = "Latitude", 
+       x = "Longitude",
+       caption = "Source: NM-AIST")
+
+
+```
+
+
+
+Similarly, we can plot line and polygon data\index{Data} using the same plot() function.  Let's load our river dataset into the session using `st_read()` function and specify the directory path where our river dataset is stored;
+
+```{r}
+#| label: fig-river
+#| fig-cap: Major rivers in Tanzania
+#| 
+rivers <- st_read("data/rivers.gpkg", quiet = TRUE)
+rivers
+```
+
+Upon observation, it becomes apparent that the river dataset contains not only geometrical information, but also two additional columns for attribute data\index{Data}, namely ID and River_Name. Prior to visualizing the distribution of rivers across the country using ggplot2, it is imperative to ensure that the metadata of the imported dataset informs us on the spatial\index{Spatial} dimension.
+
+
+```{r}
+#| label: fig-river2
+#| fig-cap: Major rivers in Tanzania
+#| 
+ggplot(data = rivers) +
+  geom_sf()
+```
+
+
+We can also visualize the polgyon, for this case, i chopped the boundary of the Arusha region for illustration purpose. Let's load the shapefile into our session using `st_read` function from **sf** package;
+
+To visualize the polygon data\index{Data}, the boundary of the Arusha region was chopped for illustration purposes. This will allow us to better understand the shape of the polygon and its various components. The dataset can be loaded into the R session using the `st_read()` function from the sf package.  plot
+
+```{r}
+arusha <- st_read("data/arusha_poly.gpkg", quiet = TRUE)
+arusha
+```
+
+The printed arusha dataset is a simple feature collection that comprises one feature and one field. The geometry type is multipolygon, with dimensions represented in XY format. The bounding box specifies the minimum and maximum values for the x and y coordinates, with xmin: 34.70163, ymin: -4.083069, xmax: 37.31218, and ymax: -1.708256 with a geodetic coordinate reference system (CRS) as WGS 84. The feature within this collection represents the region of Arusha, with its corresponding multipolygon geometry. 
+
+That information is key in understanding the spatial\index{Spatial} component in the dataset, and we can now proceed and plot this dataset with ggplot2 package. 
+
+```{r}
+#| label: fig-poly
+#| fig-cap: The Arusha Region Boundary
+#| 
+ggplot(data = arusha) +
+  geom_sf(fill = "lightgreen", color = "darkgreen")+
+  labs(
+    title = "Arusha Region Boundary", 
+    subtitle = "The location of Arusha Region", 
+    caption = "Source: NBS")
+```
+
+### Plotting Raster Data
+
+We can easily plot raster\index{Raster} with `plot` function from terra package [@terra]. We only need first to import our raster dataset from our working directory into R. As shown previous, that can be done using a `rast()` function also from terra, which read any type of raster dataset in R. Let's import an elevation dataset using the chunk code belowp
+
+```{r}
+elevation = rast("data/elevation_arusha.tif")
+elevation 
+
+0.008333333*110
+```
+
+The printed elevation dataset provides a comprehensive description of the SpatRaster class and its properties. The dataset indicates that is The SpatRaster class is a representation of a raster\index{Raster} dataset with the following dimensions: 285 rows, 313 columns, and 1 layer. The spatial\index{Spatial} resolution of the dataset is 0.008333333 (~0.91km) in both x and y directions. The elevation of arusha presented in this dataset range from 595 to 4222 meters. Let's plot the dataset
+
+```{r}
+#| label: fig-raster
+#| fig-cap: The elevation of Arusha
+#| 
+elevation %>% 
+  plot()
+```
+
+
+There are several ways to plot raster\index{Raster} data\index{Data} in R, but `ggplot2` does not support raster data natively. But Diego Hernangómez -@tidyterra developed tidyverse package with function that support spatRaster in ggplot2. The code in the chunk below generates @fig-raster1.
+
+```{r}
+#| label: fig-raster1
+#| fig-cap: The elevation of Arusha
+#| 
+ggplot() +
+  tidyterra::geom_spatraster(data = elevation)+
+  tidyterra::geom_spatraster_contour(
+    data = elevation, 
+    breaks = 1800, 
+    color = "black")
+```
+
+
+
+## Manipulating Spatial Data
+
+To manipulate raster\index{Raster} data\index{Data}, we can use functions such as `crop()`, `resample()`, and `mask()`. For example, to crop an elevation dataset of Tanzania to only cover the Arusha region, we can use the `crop()` function. Here is an example code:
+
+```{r}
+library(terra)
+library(sf)
+
+arusha <- st_read("data/arusha_poly.gpkg", quiet = TRUE)
+elevation = rast("data/wc2.1_country/TZA_wc2.1_30s_elev.tif")
+```
+
+
+### Cropping raster {#sec-crop}
+
+Cropping a raster\index{Raster} in R involves removing or extracting a subset of a raster based on a specified extent or boundary. The terra package [@terra] in R provides a `crop()` function that can be used to crop a SpatRaster based on an extent object;
+
+```{r}
+
+arusha.elevation.crop = elevation %>% 
+  terra::crop(arusha)
+
+arusha.elevation.crop
+```
+
+
+After cropping an elevation raster\index{Raster} of the geographical extent of Tanzania to the Arusha region, the next step is to visualize the chopped elevation data. We can visualize it using ggplot2 [@ggplot] and tidyterra [@tidyterra]
+
+```{r}
+#| label: fig-crop
+#| fig-cap: The cropped elevation within the geographical extent of Arusha Region
+#| 
+ggplot() +
+  tidyterra::geom_spatraster(data = arusha.elevation.crop)+
+  geom_sf(
+    data = arusha, 
+    fill = NA, 
+    color = "red", 
+    linewidth = 1.2)
+```
+
+
+### Masking raster {#sec-mask}
+
+Masking a raster\index{Raster} is a process of removing or replacing values in a raster based on a mask layer. A mask layer can be a raster or a polygon layer. The terra package [@terra] in R provides a `mask()` function that can be used to mask values in a raster object based on values in another raster or polygon layer;
+
+```{r}
+arusha.elevation.mask = elevation %>% 
+  terra::crop(arusha) %>% 
+  terra::mask(arusha)
+
+arusha.elevation.mask
+
+```
+
+After masking an elevation raster\index{Raster} of the geographical extent of Tanzania to the Arusha region, we can also visualize the masked elevation data\index{Data} using ggplot2 [@ggplot] and tidyterra [@tidyterra]
+
+```{r}
+ggplot() +
+  tidyterra::geom_spatraster(data = arusha.elevation.mask)+
+  geom_sf(
+    data = arusha, 
+    fill = NA, 
+    color = "red", 
+    linewidth = .8)
+```
+
+### Extracting elevation values {#sec-extract}
+
+The ability to extract values from a raster\index{Raster} dataset at specific locations is a critical component of spatial\index{Spatial} analysis\index{Analysis}, modeling, and decision-making processes. Researchers and analysts can gain valuable insights into patterns, trends, and relationships within the dataset by obtaining values at specific locations. This information can be used to conduct point-based sampling for validation or modeling purposes, input for predictive models, and informed decision-making. By using this process, researchers and analysts can make informed decisions that are based on reliable data\index{Data}, leading to better outcomes and a more comprehensive understanding of the underlying data. 
+
+#### Extracting from single raster to sampling points
+
+Let's imagine we dataset representing the elevation of a Arusha region shown in @fig-arusha. This is in the form of a raster\index{Raster}, where each pixel represents a small area on the map and has an associated elevation value. Now, we want to extract the elevation values of thirty specific locations (red sampling points) shown in @fig-arusha from this dataset. 
+
+
+```{r}
+#| warning: false
+#| message: false
+#| label: fig-arusha
+#| fig-cap: The sampling points superimposed on elevation dataset for Arusha Region, Tanzania
+
+ggplot() +
+  ggspatial::annotation_map_tile(type = "osm", zoom = 8)+
+  tidyterra::geom_spatraster(data = arusha.elevation.mask)+
+  geom_sf(data = sampling.points, size = 3, color = "red")+
+  ggspatial::annotation_north_arrow(location = "tr")+
+  ggspatial::annotation_scale(location = "bl")+
+  scale_fill_gradientn(
+    colours = hcl.colors(
+      n = 20, palette = "Spectral") %>% rev(), na.value = NA,
+    guide = guide_colorbar(title = "Altitude (m)",
+                           title.position = "top", 
+                           direction = "horizontal", 
+                           barheight = .6 )
+    )+
+  theme_bw()+
+  theme(
+    legend.position = c(.840,.08), 
+    legend.background = element_blank(),
+    panel.background = element_rect(fill = NA, colour = "black"))
+
+
+```
+
+
+
+First, we load the terra package [@terra] along with sf [@sf] and tidyverse [@tidyverse], which provides functions for working with raster\index{Raster} data\index{Data} and vector\index{Vector} data. 
+
+```{r}
+#| eval: false
+#| 
+require(terra)
+require(sf)
+require(tidyverse)
+```
+
+Then, we read the raster\index{Raster} dataset into R using the rast function. 
+
+```{r}
+arusha.elevation = rast("data/elevation_arusha.tif")
+arusha.elevation
+```
+
+Next, we import the sampling points, which are simple feature of the thirty locations we are interested in.
+
+```{r}
+sampling.points = st_read("data/sampling_points.gpkg", quiet = TRUE)
+sampling.points
+```
+
+
+With the sampling points loaded, we use the `extract` function from the terra package to extract the elevation values at those specific points from the raster\index{Raster} dataset. This function retrieves the elevation values corresponding to the locations we specified.
+
+
+
+```{r}
+elevation.tb = arusha.elevation %>% 
+  terra::extract(sampling.points) %>% 
+  dplyr::select(atitude_m = TZA_wc2.1_30s_elev)
+
+elevation.tb
+```
+
+We can then combine the sampling points simple feature with the extracted ones;
+
+```{r}
+sampling.points.tb = sampling.points %>% 
+  dplyr::bind_cols(elevation.tb)
+
+sampling.points.tb
+```
+
+
+#### Extracting from single raster to polygon
+
+This `extract()` function from terra packages is not limited to extracts the values of a raster\index{Raster} at the locations of spatial\index{Spatial} point, but it may be used to extract values of raster from spatial vector\index{Vector} data\index{Data} of lines, and polygons. Let's see how to extract the elevation values for each ward in the Arusha region. Let's import the ward dataset from our working directory
+
+```{r}
+wards= st_read("data/arusha_wards.gpkg", quiet = TRUE)
+
+wards 
+```
+The printed output indicates that the dataset has 155 features representing wards in the Arusha. Unlike extracting raster\index{Raster} to point feature, for polygone, we need to parse more argument to tell the function that it has to calculate the mean of all the cells within its polygon;
+
+```{r}
+ward.elevation = arusha.elevation %>% 
+  terra::extract(y = wards, fun = "mean", method = "simple") %>% 
+  dplyr::select(elevation_m = TZA_wc2.1_30s_elev)
+```
+
+Then we bind the ward elevation into simple feature
+
+```{r}
+wards.elevation.sf = wards %>% 
+  bind_cols(ward.elevation)
+
+wards.elevation.sf
+```
+
+And map the spatial\index{Spatial} distribution of the elevation across the region
+
+```{r}
+ggplot() + 
+  geom_sf(data = wards.elevation.sf, 
+          aes(fill = elevation_m), 
+          color = "ivory")
+```
+
+#### Extracting from multiple raster to sampling points
+
+## Temperature
+
+```{r}
+temperature = rast("data/wc2.1_country/TZA_wc2.1_30s_tmax.tif")
+temperature
+```
+
+The displayed raster\index{Raster} indicates that the temperature dataset consists of twelve layers, each representing a different month from January to December. The spatial\index{Spatial} extent covers the entire country with a spatial\index{Spatial} resolution of approximately 0.0083, equivalent to around 900 meters. However, the names assigned to the months are disorganized and challenging to interpret.
+
+To address this, it is necessary to enhance the dataset by assigning appropriate names to each month and performing cropping (describe in @sec-crop) and masking (describe in @sec-mask) operations to limit the temperature raster\index{Raster} to the boundaries of the Arusha region. The chunk below highlight the procedure for renaming months, crop and mask the temperature layer. 
+
+```{r}
+temperature = temperature %>% 
+  tidyterra::rename(Jan = 1, Feb = 2, Mar = 3, Apr = 4, 
+                    May = 5, Jun = 6,   Jul = 7, Aug = 8, 
+                    Sep = 9, Oct = 10, Nov = 11, Dec = 12) %>% 
+  terra::crop(arusha) %>% 
+  terra::mask(arusha)
+
+temperature
+```
+
+
+The cleaned temperature raster\index{Raster} consists of twelve layers,  but with more describtive layer name, each representing a different month from January to December. Unlike the origin, the cleaned raster\index{Raster} dataseted now has a spatial\index{Spatial} extent only cover the Arusha region but retain a spatial\index{Spatial} resolution of approximately 0.0083, equivalent to around 900 meters. Let'splot this temperature layer using `plot` function;
+
+```{r}
+#| echo: false
+#| eval: false
+#| 
+temperature[temperature > 30] = NA
+```
+
+```{r}
+#| label: fig-temp
+#| fig-cap: Monthly temperature variation across the Arusha Region
+#| 
+temperature %>% 
+  plot()
+```
+
+We notice that maximum temperature at Arusha vary across the region and we want to extract monthly value to the thirty sampling points
+
+```{r}
+#| label: fig-temp2
+#| fig-cap: Sampling points overlaid on temperature variation across the Arusha Region
+#| 
+ggplot()+
+  tidyterra::geom_spatraster(data = temperature)+
+  geom_sf(data = sampling.points, color = "black") +
+  facet_wrap(~lyr)+
+  scale_fill_gradientn(
+    name = "Tmax",
+    colours = hcl.colors(n = 20, palette = "Temps"), 
+    na.value = NA, 
+    trans = scales::modulus_trans(p = 4), 
+    breaks = c(20, 25, 29, 31, 33))+
+  scale_x_continuous(breaks = c(35.5,37))
+
+
+```
+
+Though we have a spatraster with twelve layer, we are not going to extract values to the sampling points manual for each month but rather leveraging the capabilities of terra, without the need for complex and time-consuming manual processes. 
+
+As outlined in @sec-extract, the `extract` function  in Terra [@terra] can be utilized to extract raster\index{Raster} values from a stacked spatraster object. This technique is highly effective and allows for the extraction of temperature data\index{Data} at a monthly level, which can be further analyzed and utilized for various scientific or research purposes. This approach is particularly useful in scenarios where large datasets need to be processed quickly and accurately. 
+
+```{r}
+temperatur.tb = temperature %>%        # <1>
+  terra::extract(sampling.points, xy = TRUE) %>%   # <2>
+  relocate(c(x,y), .before = ID) %>%    # <3>
+  rename(lon = x, lat = y)     # <4>
+```
+1. extract temperature with corresponding xy
+2. extract value of raster to sampling points
+3. change the position of x and y
+4. rename x to lon and y to lat
+
+
+The monthly temperature value for each sampling location with corresponding longitude and latitude are presented in the @tbl-temperature;
+
+```{r}
+#| echo: false
+#| label: tbl-temperature
+#| tbl-cap: Monthly temperature arranged in wide form color coded to show the magnitude and intensity
+
+
+
+temperatur.tb %>% 
+  gt::gt() %>% 
+  fmt_number(decimals = 1) |>
+  fmt_integer(ID) |>
+  cols_label_with(
+    fn = ~ janitor::make_clean_names(., case = "all_caps")
+  ) |>
+  data_color(
+    columns = Jan,
+     palette = hcl.colors(n = 30, palette = "Roma")
+  ) |>
+  data_color(
+    columns = Feb,
+     palette = hcl.colors(n = 30, palette = "Cividis")
+  ) |>
+  data_color(
+    columns = Mar,
+     palette = hcl.colors(n = 30, palette = "Spectral")
+  )|>
+  data_color(
+    columns = Apr,
+    palette = hcl.colors(n = 30, palette = "RdYlGn")
+  )|>
+  data_color(
+    columns = May,
+     palette = hcl.colors(n = 30, palette = "Zissou 1")
+  )|>
+  data_color(
+    columns = Jun,
+    palette = hcl.colors(n = 30, palette = "PiYG")
+  ) |>
+  data_color(
+    columns = Jul,
+     palette = hcl.colors(n = 30, palette = "RdBu")
+  )|>
+  data_color(
+    columns = Aug,
+     palette = hcl.colors(n = 30, palette = "PuOr")
+  )|>
+  data_color(
+    columns = Sep,
+    palette = hcl.colors(n = 30, palette = "TealRose")
+  )|>
+  data_color(
+    columns = Oct,
+    palette = hcl.colors(n = 30, palette = "Fall")
+  )|>
+  data_color(
+    columns = Nov,
+    palette = hcl.colors(n = 30, palette = "ArmyRose")
+  )|>
+  data_color(
+    columns = Dec,
+    palette = hcl.colors(n = 30, palette = "Earth")
+  )|>
+  tab_style(
+    style = cell_fill(color = "gray95"),
+    locations = cells_body(columns = c(lon, lat, ID))
+  ) |>
+  tab_style(
+    locations = cells_body(columns = lon:lat),
+    style = cell_text(weight = "bold")
+  ) 
+```
+
+
+The temperature data presented in @tbl-temperature is in wide form. Though is format is common used to store data\index{Data}, is rather unpopular for data analysis\index{Analysis}. Therefore we need to tranform the wide format data storage in @@tbl-temperature to long form. The long form data storage provides numerous benefits including. Firstly, it simplifies data analysis\index{Analysis} by presenting a more organized and adaptable format for tasks like data\index{Data} filtering, transformation, and aggregation using functions from the tidyverse ecosystem. 
+
+Secondly, the long format is ideal for data\index{Data} visualization as it conforms to the principles of "tidy data" and the grammar of graphics, allowing for simpler plotting and exploration of relationships between variables. Additionally, converting to long format promotes consistency and organization, making it easier to manage and interpret complex datasets. Overall, utilizing tidyverse tools to transform data from wide to long format enhances data analysis\index{Analysis}, visualization, and overall data management. The function `pivot_longer` from dplyr is widely used for this transformation; 
+
+
+```{r}
+temperatur.tb =  temperatur.tb %>% 
+  pivot_longer(cols = -c(lon:ID), 
+               values_to = "temperature", 
+               names_to = "month") %>% 
+  mutate(month = str_to_title(month),
+         month = forcats::fct_inorder(month))
+```
+
+
+```{r}
+#| label: tbl-extract-temp
+#| tbl-cap: Exerpt of the monthly temperature arranged in long form
+#| 
+temperatur.tb %>% 
+  slice(1:10) %>% 
+  gt::gt() %>% 
+  fmt_number(decimals = 3) |>
+  fmt_integer(ID) |>
+  cols_label_with(
+    fn = ~ janitor::make_clean_names(., case = "all_caps")
+  )
+```
+
+
+```{r}
+#| label: fig-month-temp
+#| fig-cap: Boxplot of monthyl maximum temperature in Arusha Region
+
+temperatur.tb %>% 
+  filter(temperature > 15) %>% 
+  ggplot(aes(x = month, y  = temperature))+
+  geom_boxplot()+
+  theme_bw(base_size = 12)+
+  theme(axis.title.x = element_blank())+
+  labs(y = expression(Temperature~(degree*C)))
+
+```
+
+
+Sometimes we are very interested with computing the mean and standard deviation of maximum temperature for the thirty sampling points across the twelve months of the year in order to get middle value of temperature. That can be computed with the code below. 
+
+```{r}
+temp.stats = temperatur.tb %>% 
+  group_by(month) %>% 
+  summarise(n = n(),bar = mean(temperature), sd = sd(temperature)) %>% 
+  ungroup()
+```
+
+In summary, the code shows a grouping of the data by month, summarizing the number of observations, the mean temperature, and the standard deviation of the temperature for each month, and then ungrouping the data frame. The resulted values include mean and standard deviation presented in @tbl-stats.
+
+
+```{r}
+#| label: tbl-stats
+#| tbl-cap: Monthly mean and standard deviation of temperature
+#| 
+temp.stats  %>% 
+  gt::gt() %>% 
+  fmt_number(decimals = 3) |>
+  fmt_integer(n) |>
+  cols_label_with(
+    fn = ~ janitor::make_clean_names(., case = "all_caps")
+  )|>
+  data_color(
+    columns = bar,
+    palette = hcl.colors(n = 30, palette = "ArmyRose", rev = TRUE)
+  )|>
+  data_color(
+    columns = sd,
+    palette = hcl.colors(n = 30, palette = "Earth", rev = TRUE)
+  )
+
+```
+
+The value of temperature shown in @tbl-stats make it hard to see the patterns hidden in the data, but by visualizing the data with a plot, a subtle clue of the information can be revealed that clearly show the pattern as @fig-interannual shows.
+
+```{r}
+#| warning: false
+#| message: false
+#| label: fig-interannual
+#| fig-cap: Inter-annual variation of maximum temperature in Arusha. The solid line is the mean and the ribbon is the standard deviation of each month across a year
+#| 
+
+temp.stats %>% 
+  mutate(index = 1:12, se = sd/sqrt(n)) %>% 
+  ggplot(aes(x = index, y = bar))+
+  annotate(
+    geom = "rect", xmin = c(1,5, 10), xmax = c(5,10,12), ymin = 21, ymax = Inf,
+    fill = c("blue", "green", "blue"), alpha = .1) +
+  geom_ribbon(
+    aes(ymin = bar-se, ymax = bar+se), col = "red", fill = "red", alpha = .2)+
+  geom_line(linewidth = 1.2)+
+  scale_x_continuous(breaks = 1:12, labels = month.abb)+
+  scale_y_continuous(name = expression(Temperature~(degree*C)))+
+  theme_bw(base_size = 13) +
+  theme(axis.title.x = element_blank(), panel.grid.minor = element_blank())
+  
+```
+
+@fig-interannual clearly show that in a year, the temperature in Arusha can be divided into a cool season that run from May to September and hot season, which begin from December through April. Let us use this two block of time to compute whether the temperature between these two season is statistically significant 
+
+
+## Derivatives from raster
+
+The `terrain` function in the terra package [@terra] provides a nifty tool for computing derivatives in hydrological modeling. It allows for the calculation of various terrain-related variables that are essential in hydrological analysis\index{Analysis}, such as slope, aspect, flow accumulation, and curvature. By utilizing the `terrain` function, you can derive important terrain derivatives that provide insights into the topographic characteristics of an area. 
+
+For example, the slope can be calculated to determine the steepness of the terrain, which is crucial for understanding water flow patterns. Aspect provides information on the direction of slope, aiding in understanding the orientation of water movement. Flow accumulation, another derivative that can be computed using `terrain`, helps identify areas where water is likely to accumulate, guiding the delineation of watersheds and the identification of stream networks. 
+
+
+```{r}
+derivatives = arusha.elevation.mask %>% 
+  terra::terrain(c("aspect", "slope", "flowdir"))
+
+derivatives
+```
+
+The derivatives of the elevation raster\index{Raster} layer in Arusha are "aspect," "slope," and "flowdir," representing the minimum and maximum values of derived quantities. We can visualize this derivatives with plot function from terra;
+
+```{r}
+#| label: fig-der
+#| fig-cap: The aspect, slope and flow direction derived from elevation raster
+#|  
+derivatives %>% 
+  plot()
+```
+
+
+To extract values for slope, aspect, and flow direction at those thirty sampling points, we use the terra package, with its `extract()` function.  This function can retrieve the corresponding values from a raster\index{Raster} dataset containing slope, aspect, and flow direction information to location of sampling points. The extract function allows for precise location-based extraction, enabling you to obtain the desired attribute values for each sampling point of interest. The chunk below highlights and the result are presented in @tbl-deriv;
+
+```{r}
+der.values = derivatives %>% 
+  terra::extract(sampling.points, xy = TRUE) %>% 
+  select(lon = x, lat = y, ID, aspect, slope, flowdir) 
+```
+
+
+
+
+```{r}
+#| label: tbl-deriv
+#| tbl-cap: Extracted values of slope, aspect and flow direction along the thirty sampling points in the Arusha Region
+
+der.values  %>% 
+  gt::gt() %>% 
+  fmt_number(decimals = 3) |>
+  fmt_integer(ID) |>
+  cols_label_with(
+    fn = ~ janitor::make_clean_names(., case = "all_caps")
+  )|>
+  data_color(
+    columns = aspect,
+    palette = hcl.colors(n = 30, palette = "ArmyRose", rev = TRUE)
+  )|>
+  data_color(
+    columns = slope,
+    palette = hcl.colors(n = 30, palette = "Earth", rev = TRUE)
+  )|>
+  data_color(
+    columns = flowdir,
+    palette = hcl.colors(n = 30, palette = "Reds 2", rev = TRUE)
+  )
+```
+
+The extracted values presented in @tbl-deriv can be integrate them to your analysis\index{Analysis} or modeling workflows, facilitating further exploration and interpretation of slope, aspect, and flow direction information in the context of your specific study or application.
+
+
+## Conclusion
+
+In this tutorial, we have covered the basics of handling spatial\index{Spatial} data\index{Data} in R. We have learned how to import point, line, polygon, and raster\index{Raster} data using the **sf** and **terra** packages. We have also learned how to manipulate spatial\index{Spatial} data using various functions provided by these packages. With these tools, you can explore and analyze spatial\index{Spatial} data in R with ease.
+
+# Appendix {.unnumbered}
+
+## vector\index{Vector} data issues {.unnumbered}
+
+Upon examining the dataset for regions in Tanzania, it has come to our attention that there are 32 layers instead of the expected 31, representing each region. This anomaly prompts us to conduct a thorough investigation to identify the additional layer and understand its nature. By exploring the dataset in detail, we can ascertain the reason for this additional layer, whether it represents a new region, a duplicate entry, or any other relevant information. This detailed exploration will aid in ensuring data\index{Data} accuracy and reliability, allowing us to make informed decisions and draw accurate conclusions based on the region-specific information within the dataset.
+
+```{r}
+regions %>% 
+  select(name = TZ_REGIONA) %>% 
+  st_drop_geometry() %>% 
+  janitor::get_dupes()
+```
+
+It has come to our attention that the Pwani region in Tanzania consists of two distinct layers. This is due to the fact that the district of Mafia Island is treated as a separate feature in the dataset. While this may seem like a minor detail, it is important to note as it can affect the way data\index{Data} is analyzed and interpreted. It is crucial to take into account all features and layers within a region to ensure accurate and comprehensive analysis\index{Analysis}. As professionals, it is our responsibility to thoroughly examine all aspects of a dataset to ensure the most reliable results possible. By acknowledging and understanding the distinct layers within the Pwani region, we can ensure a more thorough and accurate analysis\index{Analysis} of the data\index{Data}.
+
+
+## Spatial resolution in Raster {.unnumbered}
+
+Spatial resolution in raster\index{Raster} dataset refers to detail or granularity at which spatial\index{Spatial} features are represented in the dataset. It indicates the size of the smallest discernible feature that can be captured and displayed by each pixel in the raster.
+
+A higher spatial\index{Spatial} resolution means that each pixel represents a smaller area on the ground, resulting in more detailed and precise representations of spatial\index{Spatial} features. This is achieved by increasing the number of pixels per unit area, allowing for a finer level of discrimination.
+
+On the other hand, decreasing the spatial\index{Spatial} resolution results in larger pixel sizes, which leads to a loss of detail. As the pixel size increases, smaller features and subtle variations within the data\index{Data} become less distinguishable or completely lost. This reduction in spatial\index{Spatial} resolution can lead to a loss of important information and may impact the accuracy and reliability of subsequent analyses or interpretations.
+
+
+Let's read and import elevation layer from 
+
+```{r}
+
+elevation = rast("data/elevation_arusha.tif")
+elevation
+
+
+
+```
+
+Upon examination, we have observed that the raster\index{Raster} dataset has a spatial\index{Spatial} resolution of 0.0083333, which is expressed in degrees. To better understand the implications of this resolution in metric measurements, a useful rule of thumb is to multiply it by 110 for areas near the equator. By applying this conversion factor, we can estimate the approximate metric equivalent of the spatial\index{Spatial} resolution, providing a clearer understanding of the scale and size represented by each pixel in the raster dataset.
+
+```{r}
+# 1 degree = 110 km
+
+0.008333333*110
+
+```
+
+Then, use the `aggregate` function to resample the elevation raster\index{Raster} to a lower resolution. We will decrease the resolution by ten and thirty folds. 
+
+```{r}
+ele10 = elevation %>% 
+  aggregate(fact = 10, fun = "mean") %>% 
+  extend(elevation)
+
+ele30 = elevation %>% 
+  aggregate(fact = 30, fun = "mean") %>% 
+  extend(elevation)
+
+```
+
+
+
+
+```{r}
+
+par(mfrow = c(1,3))
+
+elevation %>% 
+  plot(main = "Resolution: 1km")
+
+ele10 %>% 
+  plot(main = "Resolution: 10km")
+
+ele30 %>% 
+  plot(main = "Resolution: 30km")
+```
+
+```{r}
+
+```
+
+
+
+## Session Information {.unnumbered}
+
+I have generated the information that of the machine software and packages that were used to generate this minimal book for the exercise on spatial\index{Spatial} data\index{Data} Types. This information includes the version of R used, the operating system, attached packages, and other relevant details. 
+
+
+```{r}
+#| echo: false
+#| message: false
+#|
+sessioninfo::session_info()
+```
+
+
+# References {-}
+
+

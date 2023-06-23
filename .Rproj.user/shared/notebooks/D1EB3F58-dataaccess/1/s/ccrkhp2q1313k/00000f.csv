@@ -1,0 +1,32 @@
+"0","# Load package"
+"0","require(sdmpredictors)"
+"2","载入需要的程辑包：sdmpredictors
+"
+"2","Warning: 程辑包‘sdmpredictors’是用R版本4.3.1 来建造的"
+"2","The legacy packages maptools, rgdal, and rgeos, underpinning this package
+will retire shortly. Please refer to R-spatial evolution reports on
+https://r-spatial.org/r/2023/05/15/evolution4.html for details.
+This package is now running under evolution status 0 
+"
+"2","Please note that rgdal will be retired during October 2023,
+plan transition to sf/stars/terra functions using GDAL and PROJ
+at your earliest convenience.
+See https://r-spatial.org/r/2023/05/15/evolution4.html and https://github.com/r-spatial/evolution
+rgdal: version: 1.6-7, (SVN revision 1203)
+Geospatial Data Abstraction Library extensions to R successfully loaded
+Loaded GDAL runtime: GDAL 3.6.2, released 2023/01/02
+Path to GDAL shared files: C:/Users/pc/AppData/Local/R/win-library/4.3/rgdal/gdal
+ GDAL does not use iconv for recoding strings.
+GDAL binary built with GEOS: TRUE 
+Loaded PROJ runtime: Rel. 9.2.0, March 1st, 2023, [PJ_VERSION: 920]
+Path to PROJ shared files: C:/Users/pc/AppData/Local/R/win-library/4.3/rgdal/proj
+PROJ CDN enabled: FALSE
+Linking to sp version:1.6-1
+To mute warnings of possible GDAL/OSR exportToProj4() degradation,
+use options(""rgdal_show_exportToProj4_warnings""=""none"") before loading sp or rgdal.
+"
+"0","require(tidyverse)"
+"0","require(sf)"
+"0","require(terra)"
+"0","require(tidyterra)"
+"0",""

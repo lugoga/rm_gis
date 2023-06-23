@@ -1,0 +1,166 @@
+---
+title: "Untitled"
+format: html
+---
+
+```{r}
+#| eval: false
+#| 
+install.packages("sdmpredictors")
+```
+
+```{r}
+my.colors = colorRampPalette(c("#5E85B8","#EDF0C0","#C13127"))
+options(scipen=999)
+```
+
+## packages
+
+```{r}
+# Load package
+require(sdmpredictors)
+require(tidyverse)
+require(sf)
+require(terra)
+require(tidyterra)
+
+```
+
+
+```{r}
+# Explore datasets in the package
+list_datasets()
+```
+
+
+```{r}
+# Explore layers in a dataset
+list_layers()
+```
+
+
+
+```{r}
+# Check layer statistics
+layer_stats()
+```
+
+
+```{r}
+# Check Pearson correlation coefficient between layers
+layers_correlation()
+```
+
+```{r}
+#| eval: false
+#| 
+load_layers(
+  layercodes = c("BO_bathymin", "BO_bathymean", "BO_bathymax"), 
+  equalarea = TRUE, 
+  rasterstack = TRUE, 
+  datadir = "wekeza/"
+  )
+```
+
+```{r}
+#| eval: false
+#| 
+terra::rast("wekeza/BO_cloudmax_lonlat.tif") %>% 
+  terra::plot(col = oce::oce.colorsPalette(120) %>% rev(), limits = c(.4,.95))
+```
+
+
+## download layers
+
+```{r}
+marine.layers = list_layers() |>
+  as_tibble() %>% 
+  filter(dataset_code == "Bio-ORACLE") |>
+  pull(layer_code)
+
+```
+
+
+```{r}
+
+
+
+for (j in 149:length(marine.layers)){
+  
+  load_layers(
+    layercodes = marine.layers[j], 
+    # equalarea = TRUE, 
+    # rasterstack = TRUE, 
+    datadir = "wekeza/"
+    ) 
+  print(j)
+  
+}
+
+# failed index c(20,26,27,31-35,38-42,44,46)
+```
+
+
+
+```{r}
+load_layers(
+    layercodes = marine.layers[100], 
+    # equalarea = TRUE, 
+    # rasterstack = TRUE, 
+    datadir = "wekeza/"
+    ) 
+```
+
+```{r}
+iron.wio = terra::rast("wekeza/Present.Benthic.Max.Depth.Iron.Range.tif") |>
+  terra::crop(terra::ext(25,70,-40,15)) %>% 
+  tidyterra::rename(iron = 1)
+
+
+iron.wio %>% 
+  terra::values()  %>%
+  quantile(na.rm = T, c(0.05,0.95))
+
+iron.wio %>% 
+  tidyterra::filter(between(iron, 0.000013, 0.000068)) %>% 
+  terra::plot(col = my.colors(1000))
+  terra::writeRaster("wekeza/iron.tif")
+
+
+ggplot() +
+  tidyterra::geom_spatraster(data = iron.wio)+
+  scale_fill_gradientn(colours = my.colors(1000), limits = c(0.000013, 0.000068), na.value = "white", breaks = seq(0.000013, 0.000068, length.out = 5), label = seq(0.13,0.6,0.1))+
+  theme_bw()+
+  coord_sf(expand = FALSE)
+  
+```
+
+```{r}
+down = dir(path = "wekeza/", pattern = ".tif", recursive = TRUE, full.names = TRUE)
+```
+
+
+```{r}
+iron.wio = down[10] %>% 
+  terra::rast() |>
+  terra::crop(terra::ext(25,70,-40,15)) %>% 
+  tidyterra::rename(iron = 1)
+
+
+mchongo = iron.wio %>% 
+  terra::values()  %>%
+  quantile(na.rm = T, c(0.05,0.95))
+
+# iron.wio %>% 
+#   tidyterra::filter(between(iron, mchongo[1], mchongo[2])) %>% 
+#   terra::plot(col = my.colors(1000))
+#   terra::writeRaster("wekeza/iron.tif")
+
+
+ggplot() +
+  tidyterra::geom_spatraster(data = iron.wio)+
+  scale_fill_gradientn(colours = my.colors(1000), limits = c(mchongo[1], mchongo[2]), na.value = "white", breaks = seq(0.000013, 0.000068, length.out = 5), label = seq(0.13,0.6,0.1))+
+  theme_bw()+
+  coord_sf(expand = FALSE)
+  
+```

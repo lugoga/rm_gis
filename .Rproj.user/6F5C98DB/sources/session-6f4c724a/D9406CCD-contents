@@ -1,0 +1,454 @@
+---
+title: "Exercise one"
+author: "Masumbuko Semba"
+format: html
+---
+
+```{r}
+require(geodata)
+require(tidyverse)
+require(sf)
+require(terra)
+require(tidyterra)
+require(patchwork)
+require(gt)
+```
+
+
+```{r}
+my.colors = colorRampPalette(c("#5E85B8","#EDF0C0","#C13127"))
+options(scipen=999)
+```
+
+## Environmental Variables
+
+### Minimum temperature
+
+```{r}
+#| eval: false
+#| 
+tz <- worldclim_country(
+  country = "Tanzania", 
+  var="tmin", 
+  path="data/"
+)
+
+```
+
+### Maximum temperature
+
+```{r}
+#| eval: false
+#| 
+tz <- worldclim_country(
+  country = "Tanzania", 
+  var="tmax", 
+  path="data/"
+)
+
+```
+
+
+### Rainfall
+total precipitation	(mm)
+
+```{r}
+#| eval: false
+#| 
+tz <- worldclim_country(
+  country = "Tanzania", 
+  var="prec", 
+  path="data/"
+)
+
+```
+
+
+
+
+### Wind
+
+wind speed (2m above the ground)	(ms-1)
+
+```{r}
+#| eval: false
+#| 
+tz <- worldclim_country(
+  country = "Tanzania", 
+  var="wind", 
+  path="data/"
+)
+
+```
+
+
+
+
+### incident solar radiation
+
+incident solar radiation (kJ m-2 day-1)
+
+```{r}
+#| eval: false
+#| 
+tz <- worldclim_country(
+  country = "Tanzania", 
+  var="srad", 
+  path="data/"
+)
+
+```
+
+
+
+
+
+### Elevation
+
+vapor pressure (kPa)
+
+```{r}
+#| eval: false
+#| 
+tz <- worldclim_country(
+  country = "Tanzania", 
+  var="elev", 
+  path="data/"
+)
+
+```
+## Processing
+
+
+
+
+```{r}
+regions = st_read("data/regions_poly.gpkg")
+
+regions = regions %>% 
+  janitor::clean_names() %>% 
+  select(region = tz_regiona)
+
+sf.arusha = regions %>% 
+  filter(region == "ARUSHA")
+```
+
+```{r}
+tz.list = list.files("data/wc2.1_country/", pattern = ".tif", full.names = TRUE)
+```
+
+### Elevation
+
+```{r}
+tz.list[1] %>% 
+  terra::rast() %>% 
+  terra::mask(sf.arusha) %>% 
+  terra::crop(sf.arusha) %>% 
+  terra::plot(col = hcl.colors(30))
+```
+
+### Precipitation
+
+```{r}
+precip = tz.list[2] %>% 
+  terra::rast() %>% 
+  tidyterra::rename(
+    Jan = 1, Feb = 2, Mar = 3, Apr = 4, May = 5, Jun = 6, 
+    Jul = 7, Aug = 8, Sep = 9, Oct = 10, Nov = 11, Dec = 12
+    )
+
+precip
+```
+
+```{r}
+precip.arusha = precip %>% 
+  terra::mask(sf.arusha) %>% 
+  terra::crop(sf.arusha) 
+
+precip.arusha[[2]] %>% 
+  plot(col = hcl.colors(palette = "RdBu", n = 20) %>% rev())
+```
+
+```{r}
+og = ggplot() +
+  ggspatial::annotation_map_tile(type = "hotstyle", zoom = 8, progress = "none") +
+  tidyterra::geom_spatraster(data = precip.arusha[[2]])+
+  geom_sf(data = sf.arusha, fill = NA, color = "cyan4", linewidth = .8) +
+  ggspatial::annotation_north_arrow(location = "tr")+
+  ggspatial::annotation_scale(location = "bl")+
+  scale_fill_gradientn(colours = hcl.colors(n = 20, palette = "Spectral") %>% rev(), na.value = NA,
+                       guide = guide_colorbar(title = "Precipiation (mm)", title.position = "top", direction = "horizontal"
+                                              )
+                       )+
+  theme_bw()+
+  theme(legend.position = c(.85,.1), legend.background = element_blank())+
+  labs(title = "Aggregate = NO")
+
+
+red5 = ggplot() +
+  ggspatial::annotation_map_tile(type = "hotstyle", zoom = 8, progress = "none") +
+  tidyterra::geom_spatraster(data = precip.arusha[[2]] %>% terra::aggregate(fact = 5, fun = "mean"))+
+  geom_sf(data = sf.arusha, fill = NA, color = "cyan4", linewidth = .8) +
+  ggspatial::annotation_north_arrow(location = "tr")+
+  ggspatial::annotation_scale(location = "bl")+
+  scale_fill_gradientn(colours = hcl.colors(n = 20, palette = "Spectral") %>% rev(), na.value = NA,
+                       guide = guide_colorbar(title = "Precipiation (mm)", title.position = "top", direction = "horizontal"
+                                              )
+                       )+
+  theme_bw()+
+  theme_void() + 
+  theme(legend.position = c(.85,.1), legend.background = element_blank())+
+  labs(title = "Aggregate = 15")
+
+
+red15 = ggplot() +
+  ggspatial::annotation_map_tile(type = "hotstyle", zoom = 8, progress = "none") +
+  tidyterra::geom_spatraster(data = precip.arusha[[2]] %>% terra::aggregate(fact = 15, fun = "mean"))+
+  geom_sf(data = sf.arusha, fill = NA, color = "cyan4", linewidth = .8) +
+  ggspatial::annotation_north_arrow(location = "tr")+
+  ggspatial::annotation_scale(location = "bl")+
+  scale_fill_gradientn(colours = hcl.colors(n = 20, palette = "Spectral") %>% rev(), na.value = NA,
+                       guide = guide_colorbar(title = "Precipiation (mm)", title.position = "top", direction = "horizontal"
+                                              )
+                       )+
+  theme_bw()+
+  theme(legend.position = c(.85,.1), legend.background = element_blank())+
+  labs(title = "Aggregate = 15")
+
+red30 = ggplot() +
+  ggspatial::annotation_map_tile(type = "hotstyle", zoom = 8, progress = "none") +
+  tidyterra::geom_spatraster(data = precip.arusha[[2]] %>% terra::aggregate(fact = 30, fun = "mean"))+
+  geom_sf(data = sf.arusha, fill = NA, color = "cyan4", linewidth = .8) +
+  ggspatial::annotation_north_arrow(location = "tr")+
+  ggspatial::annotation_scale(location = "bl")+
+  scale_fill_gradientn(colours = hcl.colors(n = 20, palette = "Spectral") %>% rev(), na.value = NA,
+                       guide = guide_colorbar(title = "Precipiation (mm)", title.position = "top", direction = "horizontal"
+                                              )
+                       )+
+  theme_bw()+
+  theme(legend.position = c(.85,.1), legend.background = element_blank(), panel.background = element_rect(fill = NA, colour = "black"))+
+  labs(title = "Aggregate = 30")
+```
+
+
+```{r}
+#| warning: false
+#| message: false
+#| comment: ""
+#| 
+og + red15 + red30+ plot_layout(ncol = 3, nrow = 2)
+  
+```
+
+```{r}
+ggplot() +
+  ggspatial::annotation_map_tile(type = "hotstyle", zoom = 8, progress = "none") +
+  tidyterra::geom_spatraster(data = precip.arusha[[2]] %>% terra::aggregate(fact = 30, fun = "mean"))
+
+precip.arusha[[2]] %>% terra::aggregate(fact = 30, fun = "mean") %>% 
+  stars::st_as_stars()
+```
+
+
+### Precipitation
+
+```{r}
+tmax = tz.list[4] %>% 
+  terra::rast() %>% 
+  tidyterra::rename(
+    Jan = 1, Feb = 2, Mar = 3, Apr = 4, May = 5, Jun = 6, 
+    Jul = 7, Aug = 8, Sep = 9, Oct = 10, Nov = 11, Dec = 12
+    )
+
+tmax
+```
+
+```{r}
+tmax.arusha = tmax %>% 
+  terra::mask(sf.arusha) %>% 
+  terra::crop(sf.arusha) 
+
+tmax.arusha[[2]] %>% 
+  plot(col = hcl.colors(palette = "RdBu", n = 20) %>% rev())
+```
+
+```{r}
+og = ggplot() +
+  ggspatial::annotation_map_tile(type = "hotstyle", zoom = 8, progress = "none") +
+  tidyterra::geom_spatraster(data = tmax.arusha[[2]])+
+  geom_sf(data = sf.arusha, fill = NA, color = "cyan4", linewidth = .8) +
+  ggspatial::annotation_north_arrow(location = "tr")+
+  ggspatial::annotation_scale(location = "bl")+
+  scale_fill_gradientn(colours = hcl.colors(n = 20, palette = "Spectral") %>% rev(), na.value = NA,
+                       guide = guide_colorbar(title = "Temperature (C)", title.position = "top", 
+                                              direction = "horizontal", barheight = .6,
+                                              )
+                       )+
+  theme_bw()+
+  theme(legend.position = c(.85,.1), legend.background = element_blank())+
+  labs(title = "Aggregate = NO")
+
+
+red5 = ggplot() +
+  ggspatial::annotation_map_tile(type = "hotstyle", zoom = 8, progress = "none") +
+  tidyterra::geom_spatraster(data = tmax.arusha[[2]] %>% terra::aggregate(fact = 5, fun = "mean"))+
+  geom_sf(data = sf.arusha, fill = NA, color = "cyan4", linewidth = .8) +
+  ggspatial::annotation_north_arrow(location = "tr")+
+  ggspatial::annotation_scale(location = "bl")+
+  scale_fill_gradientn(colours = hcl.colors(n = 20, palette = "Spectral") %>% rev(), na.value = NA,
+                       guide = guide_colorbar(title = "Temperature  (C)", title.position = "top", 
+                                              direction = "horizontal", barheight = .6,
+                                              )
+                       )+
+  theme_bw()+
+  theme_void() + 
+  theme(legend.position = c(.85,.1), legend.background = element_blank())+
+  labs(title = "Aggregate = 15")
+
+
+red15 = ggplot() +
+  ggspatial::annotation_map_tile(type = "hotstyle", zoom = 8, progress = "none") +
+  tidyterra::geom_spatraster(data = tmax.arusha[[2]] %>% terra::aggregate(fact = 15, fun = "mean"))+
+  geom_sf(data = sf.arusha, fill = NA, color = "cyan4", linewidth = .8) +
+  ggspatial::annotation_north_arrow(location = "tr")+
+  ggspatial::annotation_scale(location = "bl")+
+  scale_fill_gradientn(colours = hcl.colors(n = 20, palette = "Spectral") %>% rev(), na.value = NA,
+                       guide = guide_colorbar(title = "Temperature (C))", title.position = "top", 
+                                              direction = "horizontal", barheight = .6
+                                              )
+                       )+
+  theme_bw()+
+  theme(legend.position = c(.85,.1), legend.background = element_blank())+
+  labs(title = "Aggregate = 15")
+
+red30 = ggplot() +
+  ggspatial::annotation_map_tile(type = "hotstyle", zoom = 8, progress = "none") +
+  tidyterra::geom_spatraster(data = tmax.arusha[[2]] %>% terra::aggregate(fact = 30, fun = "mean"))+
+  geom_sf(data = sf.arusha, fill = NA, color = "cyan4", linewidth = .8) +
+  ggspatial::annotation_north_arrow(location = "tr")+
+  ggspatial::annotation_scale(location = "bl")+
+  scale_fill_gradientn(colours = hcl.colors(n = 20, palette = "Spectral") %>% rev(), na.value = NA,
+                       guide = guide_colorbar(title = "Temperaturer (C)", title.position = "top", 
+                                              direction = "horizontal", barheight = .6,
+                                              )
+                       )+
+  theme_bw()+
+  theme(legend.position = c(.85,.1), legend.background = element_blank(), panel.background = element_rect(fill = NA, colour = "black"))+
+  labs(title = "Aggregate = 30")
+```
+
+
+```{r, fig.height=6}
+#| warning: false
+#| message: false
+#| 
+og  + red30+ plot_layout(ncol = 3, nrow = 2)
+  
+```
+
+## extraction
+
+```{r}
+random.points = sf.arusha %>% 
+  st_sample(size = 30) %>% 
+  st_as_sf() %>% 
+  mutate(name = paste0("station_", 1:n()))
+
+# random.points %>% st_write("data/sampling_points.gpkg")
+# sf.arusha %>% st_write("data/arusha_poly.gpkg")
+
+```
+
+
+```{r}
+ggplot() +
+  tidyterra::geom_spatraster(data = tmax.arusha)+
+  geom_sf(data = random.points) +
+  scale_fill_gradientn(colours = oce::oce.colors9A(120), na.value = NA, 
+                       trans = scales::modulus_trans(p = 2), name = expression(Temp~(degree*C)))+
+  facet_wrap(~lyr)+
+  theme_void()
+
+```
+
+
+```{r}
+tmax.extracts = tmax.arusha %>% 
+  terra::extract(random.points)
+
+tmax.extracts %>% 
+  gt::gt() %>% 
+  # gt::opt_interactive(
+  #   use_search = TRUE,
+  #   # use_filters = TRUE,
+  #   use_resizers = TRUE,
+  #   use_highlight = TRUE,
+  #   use_compact_mode = TRUE,
+  #   use_text_wrapping = FALSE,
+  #   use_page_size_select = TRUE
+  # ) %>% 
+  fmt_number(decimals = 2) |>
+  fmt_integer(ID) |>
+  cols_label_with(
+    fn = ~ janitor::make_clean_names(., case = "all_caps")
+  ) |>
+  data_color(
+    columns = Jan,
+    palette = "Reds"
+  ) |>
+  data_color(
+    columns = Feb,
+    palette = "Blues"
+  ) |>
+  data_color(
+    columns = Mar,
+    palette = "Greens"
+  )|>
+  data_color(
+    columns = Apr,
+    palette = "Purples"
+  )|>
+  data_color(
+    columns = May,
+    palette = "Reds"
+  )|>
+  tab_style(
+    style = cell_fill(color = "gray95"),
+    locations = cells_body(columns = c(lon, lat, pressure))
+  ) |>
+  tab_style(
+    locations = cells_body(columns = salinity),
+    style = cell_text(weight = "bold")
+  ) 
+```
+
+```{r}
+tmax.extracts.long =  tmax.extracts %>% 
+  pivot_longer(-ID, values_to = "temperature", names_to = "months") %>% 
+  mutate(months = forcats::fct_inorder(months))
+
+tmax.extracts.long
+```
+
+
+```{r}
+#| warning: false
+#| message: false
+#| 
+ tmax.extracts.long %>% 
+  group_by(months) %>% 
+  summarise(n = n(),bar = mean(temperature), sd = sd(temperature)) %>% 
+  ungroup() %>% 
+  mutate(index = 1:12, se = sd/sqrt(n)) %>% 
+  ggplot(aes(x = index, y = bar))+
+  annotate(geom = "rect", xmin = c(1,5, 10), xmax = c(5,10,12), ymin = 21, ymax = Inf, 
+           fill = c("blue", "green", "blue"), alpha = .1) +
+  geom_ribbon(aes(ymin = bar-se, ymax = bar+se), col = "red", fill = "red", alpha = .2)+
+  geom_line(linewidth = 1.2)+
+  scale_x_continuous(breaks = 1:12, labels = month.abb)+
+  scale_y_continuous(name = expression(Temperature~(degree*C)))+
+  hrbrthemes::theme_ipsum()+
+  theme(axis.title.x = element_blank(), panel.grid.minor = element_blank())
+  
+```
+

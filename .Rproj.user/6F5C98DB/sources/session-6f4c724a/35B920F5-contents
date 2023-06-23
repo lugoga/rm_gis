@@ -1,0 +1,819 @@
+---
+title: "Remote Sensing <br> and Geographic Information System (GIS)"
+subtitle: "Course Code: HWRE 6375"
+author: "Masumbuko Semba"
+date: "June 21, 2023"
+institute: "Nelson Mandela African Institution of Science and Technology"
+date-modified: "21 June 2022"
+format: 
+    revealjs:
+      reference-location: document
+      theme: serif
+      highlight-style: ayu-mirage
+execute: 
+  echo: false
+  warning: false
+  message: false
+  comment: ""
+
+slide-number: true
+theme: "journal"
+code-fold: true
+code-line-numbers: true
+# logo: udsm_logo.png
+css: style.css
+---
+
+
+```{r}
+require(sf)
+require(tidyverse)
+require(terra)
+require(tidyterra)
+require(patchwork)
+require(magrittr)
+require(tmap)
+require(gt)
+
+
+tmap_mode(mode = "view")
+basemaps = c("Image"="Esri.WorldImagery", "OSM"="OpenStreetMap")
+
+
+knitr::knit_hooks$set(crop = knitr::hook_pdfcrop)
+
+```
+
+
+
+# Contents
+-   Peek: GIS and RM
+
+::: incremental
+-   Glimpse: Software & Tools
+-   Data types
+-   Sources of Data
+:::
+
+# Introduction
+
+## Introduction
+
+-   We are in the age of data.
+
+::: incremental
+-   Data are in are in high demand.
+-   SPatial data are higly needed
+-   Data science emerged as a professional
+:::
+
+# Why Bother with Data?
+
+## Dependency on nature
+
+::: columns
+::: {.column width="60%"}
+Sustainable Development Goals (SDGs) depends on natural resource management:
+
+-   **SDG 13**--Climate Action
+-   **SDG 14**--Life Below Water
+-   **SDG 15**--Life On Land
+
+[source](https://www.unep.org/resources/making-peace-nature)
+:::
+
+::: {.column width="40%"}
+```{r}
+#| out-width: "140%"
+#| fig-align: right
+#| 
+knitr::include_graphics("images/sdgs_makingpeacewithnature_small.jpg")
+```
+:::
+:::
+
+## Ecosystems Distribution
+
+```{r}
+#| out-width: "60%"
+#| fig-align: center
+#| 
+knitr::include_graphics("images/resolv_ecoregions2017.png")
+```
+
+## Countries Dominance
+
+![](screenshot/countries_satellites.png)
+
+## Who own the earth
+
+![](screenshot/satellite_who_owns_orbit.png)
+
+## Satellite for what?
+
+![](screenshot/satellite_purpose.png)
+
+## Predictions
+
+-   Nearly 10,000 satellites will be launched by 2028
+
+![](screenshot/satellite_predict_launc.png)
+
+# Introduction to Geographic Information System (GIS)
+
+## Introduction to GIS ....
+
+A Geographic Information System (GIS) is a computer-based system for *capturing, managing, analyzing, and visualizing* spatial data.
+
+::: incremental
+-   GIS integrates various types of data, such as maps, satellite imagery, and tabular data, to provide a comprehensive view of geographic information.
+:::
+
+## First Components of GIS: Spatial Data
+
+GIS relies on spatial data, which represents the geographic features and their locations.
+
+::: incremental
+-   Spatial data can be represented using vector (points, lines, polygons) or raster (grid) data models.
+:::
+
+## Second Components of GIS: Attribute Data
+
+Attribute data provides additional information about the geographic features stored in the GIS.
+
+::: incremental
+-   It is typically stored in tabular format and linked to the spatial data.
+:::
+
+## Third Component of GIS: Tools and Functions
+
+GIS software provides a range of tools and functions for data capture, analysis, visualization, and presentation.
+
+::: incremental
+-   Examples include spatial querying, spatial analysis, map overlay, and geoprocessing operations
+:::
+
+## Applications of GIS
+
+GIS is used in various fields and industries, including urban planning, environmental management, transportation, agriculture, and emergency management.
+
+::: incremental
+-   It facilitates decision-making by enabling spatial analysis, modeling, and scenario planning.
+:::
+
+# Remote Sensing
+
+::: callout-note
+*Remote Sensing play crucial roles in collecting, managing and analyzing spatial data for a wide range of applications*
+:::
+
+## Introductio to remote sensing ...
+
+Remote Sensing involves acquiring information about the Earth's surface without physical contact, using sensors mounted on aircraft or satellites.
+
+::: incremental
+-   It captures data in the form of imagery or digital measurements of the Earth's features.
+:::
+
+## Remote Sensing Technologies: Satellites
+
+Satellites equipped with sensors capture imagery and data over large areas.
+
+::: incremental
+-   Examples include optical sensors (capturing visible and near-infrared light) and radar sensors (capturing microwave signals)
+:::
+
+## Remote Sensing Technologies: Aerial Photography:
+
+Aircraft-mounted cameras capture high-resolution imagery for specific areas.
+
+::: incremental
+-   Used in applications such as land cover mapping, infrastructure planning, and environmental monitoring.
+:::
+
+## Applications of Remote Sensing
+
+Remote Sensing has diverse applications, including land cover and land use mapping, agriculture monitoring, forestry management, disaster assessment, and climate studies.
+
+::: incremental
+-   It provides valuable information for understanding Earth's processes and monitoring changes over time.
+:::
+
+## Integration of GIS and Remote Sensing
+
+GIS and Remote Sensing are complementary technologies often used together.
+
+::: incremental
+-   Remote sensing data, such as satellite imagery, can be integrated into GIS for visualization, analysis, and decision-making
+:::
+
+# Software and Tools for GIS and RM
+
+::: callout-note
+*GIS and Remote Sensing rely on a variety of software and tools for data management, analysis, and visualization*
+:::
+
+## GIS Software: ArcGIS:
+
+Developed by Esri, ArcGIS is one of the most widely used GIS software packages.
+
+::: incremental
+-   It offers a comprehensive suite of tools for data management, analysis, and visualization.
+-   ArcGIS includes ArcMap for traditional desktop-based GIS and ArcGIS Pro, a more advanced and modern GIS platform.
+:::
+
+## GIS Software: QGIS:
+
+QGIS (Quantum GIS) is a free and open-source GIS software.
+
+::: incremental
+-   It provides a user-friendly interface and supports a wide range of GIS functionalities.
+-   QGIS is highly extensible with a vast library of plugins and extensions.
+:::
+
+## GIS Software: GRASS GIS:
+
+GRASS GIS (Geographic Resources Analysis Support System) is an open-source GIS software primarily used for geospatial analysis and modeling.
+
+::: incremental
+-   It offers advanced spatial analysis capabilities, particularly for environmental and landscape studies.
+:::
+
+## Remote Sensing Software: ENVI
+
+ENVI (Environment for Visualizing Images) is a popular software specifically designed for remote sensing data analysis.
+
+::: incremental
+-   It provides a wide range of tools for image processing, classification, and feature extraction.
+-   ENVI integrates well with other GIS software for seamless data integration.
+:::
+
+## Remote Sensing Software: Erdas Imagine:
+
+Erdas Imagine is a comprehensive remote sensing software suite developed by Hexagon Geospatial.
+
+::: incremental
+-   It offers powerful capabilities for processing and analyzing satellite and aerial imagery.
+-   Erdas Imagine supports advanced image classification, change detection, and 3D visualization.
+:::
+
+
+## Remote Sensing Software: Google Earth Engine:
+
+Google Earth Engine is a cloud-based platform for analyzing and visualizing geospatial data at scale.
+
+::: incremental
+-   It provides access to a vast repository of satellite imagery and datasets for various applications.
+-   Google Earth Engine combines remote sensing data with Google's computational infrastructure for efficient processing.
+:::
+
+## Additional Tools and Libraries {.scrollable}
+
+Apart from dedicated software, several tools and libraries are used in GIS and Remote Sensing
+
+::: incremental
+- GDAL (Geospatial Data Abstraction Library) for data format conversion and manipulation.
+- PostGIS, a spatial extension for PostgreSQL, for managing spatial databases.
+- R and Python programming languages with libraries like terra, sf, geopandas, rasterio, and  for geospatial analysis and modeling.
+
+:::
+
+# Data Types
+
+## Data types {.scrollable}
+
+:::: {.columns}
+
+::: {.column width="40%"}
+
+```{r}
+#| echo: true
+#| code-fold: show
+
+
+regions = st_read("data/regions_poly.gpkg", 
+                  quiet = TRUE)
+
+regions = regions %>% 
+  janitor::clean_names() %>% 
+  select(region = tz_regiona)
+
+sf.arusha = regions %>% 
+  filter(region == "ARUSHA")
+
+sampling.points = sf.arusha %>% 
+  st_sample(size = 15) %>% 
+  st_as_sf() %>% 
+  mutate(id = 1:n())
+
+
+rivers = st_read("data/rivers.gpkg", quiet = TRUE) %>% 
+  st_crop(sf.arusha)
+
+```
+
+:::
+
+
+
+::: {.column width="60%"}
+
+```{r}
+#| echo: false
+
+# ggplot() +
+#   ggspatial::annotation_map_tile(type = "osm", zoom = 8) +
+#   geom_sf(data = sf.arusha, fill = "red", color = "red", linewidth = 1.2, alpha = .2)
+
+tm_basemap(server = "OpenStreetMap") +
+tm_shape(shp = sf.arusha, name = "Arusha Boundaries") +
+  tm_fill(col = "red", alpha = .2) +
+  tm_borders(col = "red", lwd = 2)+
+tm_shape(shp = rivers, name = "Rivers")+
+  tm_lines(col = "darkblue", lwd = 1.2) +
+tm_shape(shp = sampling.points, name = "Sampling points")+
+  tm_markers()
+
+```
+
+:::
+::::
+
+
+
+
+```{r}
+#| echo: true
+#| code-fold: false
+regions = st_read("data/regions_poly.gpkg", quiet = TRUE)
+
+regions = regions %>% 
+  janitor::clean_names() %>% 
+  select(region = tz_regiona)
+
+sf.arusha = regions %>% 
+  filter(region == "ARUSHA")
+
+```
+
+:::
+::::
+
+## Data Types {.scrollable}
+
+Two main types of data exists: *Vector* and *Raster*
+
+::: incremental
+-   Vector and raster models are both valuable for representing and analyzing spatial data.
+-   The choice of model depends on the nature of the data and the analysis requirements.
+:::
+
+## Vector Data Model
+
+The vector data model represents spatial data as discrete objects composed of points, lines, and polygons.
+
+::: incremental
+-   It uses coordinates and topological relationships to define and analyze geographic features.
+:::
+
+## Vector data model
+
+Uses coordinates and topological relationships to define features.
+
+::: incremental
+-   Well-suited for representing discrete objects and
+
+:::
+
+## Vector data model
+
+-   There are three subcategories of vector data: *point*, *line*, and *polygon*
+
+## Point
+
+A single piece of coordinate is a point
+
+::: incremental
+-   Represent specific locations in space.
+-   Examples: Cities, landmarks, sampling locations.
+
+:::
+
+## Line
+
+A series of points connected to each other in line.
+
+::: incremental
+-   Represent linear features or paths.
+-   Examples: Roads, rivers, pipelines
+
+:::
+
+## Polygon
+
+ Are created by connecting a number of lines is a polygon.
+
+::: incremental
+-   Represent enclosed areas or regions.
+-   Examples: Countries, lakes, buildings.
+
+:::
+
+## Representation of Features {.scrollable}
+
+Each feature is defined by its geometry (shape) and attributes (associated information).
+
+::: incremental
+-   Geometry: Points are defined by coordinates, lines by a series of connected points, and polygons by a closed set of lines.
+
+:::
+
+## Attributes {.scrollable}
+
+Additional information associated with features.
+
+::: incremental
+-   Examples: Name, population, area, elevation.
+-   Attributes are stored in a tabular format, with each row representing a feature and columns representing attribute fields.
+
+:::
+
+## Topological Relationships {.scrollable}
+
+Vector data model supports topological relationships between features.
+
+::: incremental
+-   Topology defines spatial relationships like adjacency, connectivity, and containment.
+-   Enables operations like buffering, overlay analysis, and network routing.
+
+:::
+
+## Advantages of Vector Data Model {.scrollable}
+
+1. Accurate representation of real-world objects.
+
+::: incremental
+2.  Efficient for representing discrete features.
+3.  Supports topological relationships and spatial analysis.
+4.  Flexibility in data capture and editing.
+:::
+
+## Limitations of Vector Data Model {.scrollable}
+
+1.  Higher storage requirements for complex datasets.
+
+::: incremental
+2.  Difficulty in representing continuous phenomena (e.g., elevation)..
+3.  Challenges in representing features with irregular shapes.
+:::
+
+## Raster Data Model {.scrollable}
+
+The raster data model represents spatial data as a grid of cells or pixels, where each cell stores a single value or attribute.
+
+::: incremental
+-   It is well-suited for representing continuous phenomena and regularly spaced data.
+:::
+
+
+## Raster Data model {.scrollable}
+
+
+:::: {.columns}
+
+::: {.column width="50%"}
+
+
+```{r}
+#| echo: true
+#| code-fold: show
+#| eval: true
+ele = terra::rast("data/wc2.1_country/TZA_wc2.1_30s_elev.tif") %>% 
+  tidyterra::rename(elevation = 1)
+
+
+
+ele.arusha = ele %>% 
+  terra::mask(sf.arusha) %>% 
+  terra::crop(sf.arusha) 
+```
+
+:::
+
+::: {.column width="50%"}
+
+
+```{r}
+  tm_basemap(server = "OpenStreetMap") +
+tm_shape(shp = ele.arusha, name = "Altitude") +
+  tm_raster(style = "cont", palette = hcl.colors(n = 120, palette = "Spectral") %>% rev())+
+tm_shape(shp = sf.arusha, name = "Arusha Boundaries") +
+  # tm_fill(col = "red", alpha = .2) +
+  tm_borders(col = "red", lwd = 2)+
+tm_shape(shp = rivers, name = "Rivers")+
+  tm_lines(col = "darkblue", lwd = 1.2) +
+tm_shape(shp = sampling.points, name = "Sampling points")+
+  tm_markers()
+```
+
+
+:::
+
+::::
+
+
+
+
+
+## Components of Raster Data: Cells (Pixels) {.scrollable}
+Raster data is divided into a grid of cells or pixels.
+
+
+:::: {.columns}
+
+::: {.column width="50%"}
+
+
+::: incremental
+-   Each cell represents a specific location on the Earth's surface.
+:::
+
+
+:::
+
+::: {.column width="50%"}
+
+```{r}
+#| fig-width: 4
+#| fig-height: 4
+ele10 = ele.arusha %>% 
+  terra::aggregate(fact = 10, fun = "mean") 
+
+ggplot() +
+  ggspatial::annotation_map_tile(type = "osm", zoom = 8, progress = "none") +
+  geom_spatraster(data = ele10)+
+  geom_sf(data = sf.arusha, fill = NA, color = "cyan4", linewidth = .8) +
+  ggspatial::annotation_north_arrow(location = "tr")+
+  ggspatial::annotation_scale(location = "bl")+
+  scale_fill_gradientn(colours = hcl.colors(n = 20, palette = "Spectral") %>% rev(), na.value = NA,
+                       breaks = seq(1000,4000, 1000),
+                       guide = guide_colorbar(title = "Altitude (m)", title.position = "top", direction = "horizontal"
+                                              )
+                       )+
+  theme_bw()+
+  theme(legend.position = c(.85,.1), legend.background = element_blank(), panel.background = element_rect(fill = NA, colour = "black"))
+
+```
+
+
+
+:::
+
+::::
+
+## Components of Raster Data: Cell Size and Resolution {.scrollable}
+
+Resolution refers to the level of detail or the size of the smallest discernible feature.
+
+
+:::: {.columns}
+
+::: {.column width="50%"}
+
+
+
+```{r}
+#| fig-width: 4
+#| fig-height: 4
+ele10 = ele.arusha %>% 
+  terra::aggregate(fact = 10, fun = "mean") 
+
+ggplot() +
+  ggspatial::annotation_map_tile(type = "osm", zoom = 8, progress = "none") +
+  geom_spatraster(data = ele10)+
+  geom_sf(data = sf.arusha, fill = NA, color = "cyan4", linewidth = .8) +
+  ggspatial::annotation_north_arrow(location = "tr")+
+  ggspatial::annotation_scale(location = "bl")+
+  scale_fill_gradientn(colours = hcl.colors(n = 20, palette = "Spectral") %>% rev(), na.value = NA,
+                       breaks = seq(1000,4000, 1000),
+                       guide = guide_colorbar(title = "Altitude (m)", title.position = "top", direction = "horizontal"
+                                              )
+                       )+
+  theme_bw()+
+  theme(legend.position = c(.85,.1), legend.background = element_blank(), panel.background = element_rect(fill = NA, colour = "black"))
+
+```
+
+:::
+
+::: {.column width="50%"}
+
+```{r}
+#| fig-width: 4
+#| fig-height: 4
+ele20 = ele.arusha %>% 
+  terra::aggregate(fact = 20, fun = "mean") 
+
+ggplot() +
+  ggspatial::annotation_map_tile(type = "osm", zoom = 8, progress = "none") +
+  geom_spatraster(data = ele20)+
+  geom_sf(data = sf.arusha, fill = NA, color = "cyan4", linewidth = .8) +
+  ggspatial::annotation_north_arrow(location = "tr")+
+  ggspatial::annotation_scale(location = "bl")+
+  scale_fill_gradientn(colours = hcl.colors(n = 20, palette = "Spectral") %>% rev(), na.value = NA,
+                       breaks = seq(1000,4000, 1000),
+                       guide = guide_colorbar(title = "Altitude (m)", title.position = "top", direction = "horizontal"
+                                              )
+                       )+
+  theme_bw()+
+  theme(legend.position = c(.85,.1), legend.background = element_blank(), panel.background = element_rect(fill = NA, colour = "black"))
+
+```
+
+
+
+:::
+
+::::
+
+## Components of Raster Data: Attribute Values {.scrollable}
+
+-   Each cell stores a value representing a specific attribute or property.
+
+::: incremental
+-   Examples: Elevation, temperature, vegetation index.
+
+:::
+
+## Advantages of Raster Data Model {.scrollable}
+
+1.  Efficient storage for large datasets.
+
+::: incremental
+2.  Suitable for analyzing continuous data.
+3.  Supports various types of spatial analysis operations like overlay and proximity.
+4.  Well-suited for remote sensing and satellite imagery analysis.
+:::
+
+## Limitations of Raster Data Model {.scrollable}
+
+1.  Less accurate representation of complex shapes and boundaries.
+::: incremental
+2.  Data loss due to cell resolution, which may result in generalization or loss of detail.
+3.  Difficulty in representing features with irregular shapes.
+:::
+
+## Raster Data Formats {.scrollable}
+
+-   Raster data can be stored in various file formats, such as TIFF, JPEG, and GeoTIFF.
+
+::: incremental
+-   These formats include both the spatial data (grid) and attribute information.
+
+:::
+
+## Applications of Raster Data: Digital Elevation Models {.scrollable}
+
+-   Used to represent terrain and elevation data.
+
+::: incremental
+-   Essential for hydrological modeling, slope analysis, and viewshed analysis.
+:::
+
+## Applications of Raster Data: Satellite Imagery Analysis {.scrollable}
+
+-   Raster data from satellites used for land cover classification, change detection, and vegetation analysis.
+
+## Applications of Raster Data: Climate Modeling {.scrollable}
+
+The raster data model is widely used for representing and analyzing spatial data, particularly for continuous phenomena.
+
+
+-   Raster data utilized to model temperature patterns, precipitation levels, and climate change scenarios.
+
+
+# Data Sources
+
+Environmental sciences rely on various data sources to study and understand the Earth's environment and ecosystems.
+
+::: callout-important
+-   These data sources provide valuable information for studying climate change, biodiversity, ecosystems, and environmental health
+:::
+
+## Data Sources: [NASA Earth Observing System Data and Information System] {.scrollable}
+
+-   [EOSDIS](https://earthdata.nasa.gov/) provides access to a wide range of satellite-based Earth observation data.
+
+::: incremental
+-   Data sets include land cover, climate variables, oceanography, atmospheric data, and more.
+-   Website: https://earthdata.nasa.gov/
+
+:::
+
+## Data Sources: <br> [United States Geological Survey (USGS)] {.scrollable}
+
+
+-   [USGS](https://www.usgs.gov/products/data) offers an extensive collection of environmental data, including geospatial data, land cover data, streamflow data, and climate data.
+
+::: incremental
+-   Data sets cover topics such as land use, hydrology, ecosystems, and natural hazards.
+-   Website: https://www.usgs.gov/
+::: 
+
+## Data Sources:<br> [National Centers for Environmental Information] {.scrollable}
+
+
+
+-   [NCEI](https://www.ncei.noaa.gov/) is a comprehensive source for environmental data, including climate data, weather data, oceanic data, and geophysical data.
+
+::: incremental
+-   It provides access to historical climate records, satellite data, bathymetry data, and more.
+-   Website: https://www.ncei.noaa.gov/
+:::
+
+## Data Sources: <br> European Space Agency (ESA) Climate Change Initiative (CCI) {.scrollable}
+
+
+-   [ESA](https://climate.esa.int/en/projects/climate-change-initiative/) CCI provides long-term climate data records derived from satellite observations.
+
+::: incremental
+-   Data sets include variables like land cover, sea ice, greenhouse gases, aerosols, and sea level.
+-   Website: https://climate.esa.int/en/projects/climate-change-initiative/
+:::
+
+## Data Sources: <br> Global Biodiversity Information Facility (GBIF){.scrollable}
+
+-   [GBIF](https://www.gbif.org/) offers a global database of species occurrence data, including records of plants, animals, and microorganisms.
+
+::: incremental
+-   It serves as a valuable resource for studying biodiversity patterns and distribution.
+-   Website: https://www.gbif.org/
+:::
+
+## Data Sources:<br> National Ecological Observatory Network (NEON) {.scrollable}
+
+-   [NEON](https://www.neonscience.org/) provides open access to ecological data collected from field sites across the United States.
+
+::: incremental
+-   Data sets include measurements related to vegetation, soil, climate, and aquatic ecosystems.
+-   Website: https://www.neonscience.org/
+:::
+
+## Data Sources: <br> Environmental Protection Agency (EPA) Data and Tools {.scrollable}
+
+-   [EPA](https://www.epa.gov/data) offers various data and tools related to air quality, water quality, climate, and environmental health.
+
+::: incremental
+-   It provides access to environmental monitoring data, regulatory information, and mapping tools.
+-   Website: https://www.epa.gov/data
+:::
+
+## Data Sources: WorldClim {.scrollable}
+
+[WorldClim](https://www.worldclim.org/) is a platform that provides global climate data for ecological and conservation research. 
+
+
+::: incremental
+- The data includes variables such as temperature, precipitation, and other climatic factors
+- Widely used to model species distributions, assess the impacts of climate change, and inform conservation planning. 
+- The platform offers free access to high-resolution climate data
+:::
+
+# Thanks!
+
+Slides created via the R packages: [**Quarto**](https://quarto.org/)
+
+The chakra comes from [remark.js](https://remarkjs.com), [**knitr**](http://yihui.name/knitr), and [R Markdown](https://rmarkdown.rstudio.com).
+
+
+# Introduction of participants
+## introduction {.scrollable}
+
+Peter
+Electrical techncian but is a civil engineer
+WOrk at Water supply in Mpwapwa
+Have introduction of GIS and Remote Sensing
+
+Charles simpn PhD -candidatee
+Water and Resources management
+GIS and RM is new, he has been used before. An elementary step like digitizing
+Expectation: GIS related issues on ground water and surface water and 
+
+
+OWino
+Builidng
+Civil
+Hydrology and water resource
+GIS is an elementary --Mapping
+
+Daudi
+Irrigation and water engingeering
+WOrks at Karatu as water supply
+Hydrology and water resource ---governace
+
+
+
+
+
+
+

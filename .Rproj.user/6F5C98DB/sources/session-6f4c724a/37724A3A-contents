@@ -1,0 +1,856 @@
+---
+title: "Physical Oceanography"
+subtitle: "Exploring the Depths of the World Ocean"
+author: "Masumbuko Semba"
+institute: "Nelson Mandela African Institution of Science and Technology"
+date: "06 June 2022"
+date-modified: "06 June 2022"
+format: 
+    revealjs:
+      reference-location: document
+      theme: serif
+      highlight-style: ayu-mirage
+execute: 
+  echo: false
+  warning: false
+  message: false
+  comment: ""
+
+slide-number: true
+theme: "journal"
+code-fold: true
+code-line-numbers: true
+logo: udsm_logo.png
+css: style.css
+---
+
+```{r}
+require(sf)
+require(tidyverse)
+require(terra)
+require(tidyterra)
+require(patchwork)
+require(magrittr)
+require(tmap)
+require(gt)
+
+
+tmap_mode(mode = "view")
+basemaps = c("Image"="Esri.WorldImagery", "OSM"="OpenStreetMap")
+
+
+
+```
+
+```{r}
+knitr::knit_hooks$set(crop = knitr::hook_pdfcrop)
+```
+
+```{r}
+mycolor = c("#7f007f", "#0000ff",  "#007fff", "#00ffff", "#00bf00", "#7fdf00", "#ffff00", "#ff7f00", "#ff3f00", "#ff0000", "#bf0000")
+odv_color = c("#feb483", "#d31f2a", "#ffc000", "#27ab19", "#0db5e6", "#7139fe", "#d16cfa") %>% rev()
+mycolor3 = c("#9000B0", "#C900B0", "#C760AF","#1190F9", "#60C8F8", "#90C9F8", "#F8F8F8", "#F8F800",  "#F8D730", "#f8b030", "#f8602f", "#f80000")
+
+mycolor2 = c("#040ED8", "#2050FF", "#4196FF", "#6DC1FF", "#86D9FF", "#9CEEFF", "#AFF5FF", "#CEFFFF",
+                      "#FFFE47", "#FFEB00", "#FFC400", "#FF9000", "#FF4800", "#FF0000", "#D50000", "#9E0000")
+                      pal = wesanderson::wes_palette("Zissou1", 21, type = "continuous")
+                      mycolor4 = c("#ffffff", "#c8ffbe", "#78f573", "#1eb41e", "#b4f0fa", "#50a5f5", "#1e6eeb", "#dcdcff",
+                                            "#a08cff", "#7060dc", "#fffaaa", "#ffa000", "#ff1400", "#a50000", "#e68c8c", "#ffe6e6")
+                                            
+    
+```
+
+```{r}
+#| warning: false
+#| message: false
+#| comment: ""
+#| 
+mpa = st_read("f:/shapefile/wio_MPAs/WIO_MPA_LMMAs.shp", quiet = TRUE) %>% 
+  janitor::clean_names() %>% 
+  st_make_valid()
+
+mpa.clean = mpa %>% 
+  mutate(state  = st_is_valid(geometry)) %>% 
+  filter(!state == FALSE)
+```
+
+
+```{r}
+#| eval: false
+
+
+## bathymetry
+bathy = rast("f:/thesisTypeset/vivaVoce/data/wioregio-7753.asc") %>% 
+  rename(depth = 1) %>% 
+  filter(depth <= 0)
+
+
+```
+
+```{r}
+# basemap
+africa = st_read("f:/thesisTypeset/vivaVoce/data/africa.shp", quiet = TRUE) %>% select(country = CNTRY_NAME )
+```
+
+```{r}
+## wind speed
+wind.quik_season = read_csv("f:/thesisTypeset/vivaVoce/data/wind_quik_season.csv")
+
+```
+
+
+
+## Introduction {.scrollable}
+- **Definition**: 
+    - Physical oceanography is the study of physical properties and dynamics of the oceans.
+- **Importance**: 
+  - Understanding oceanic processes, circulation patterns, and their impact on climate and marine life.
+- **Key Areas**: 
+  -Temperature, Chlorophyll, salinity, density, currents, waves, tides, and circulation patterns.
+  
+
+# {background-video="current_pathway.mp4"}
+
+
+## Seasonal surface current patterns
+
+:::: {.columns}
+
+::: {.column width="50%"}
+
+<!-- **Northeast Season** -->
+
+```{r}
+#| out-width: "140%"
+knitr::include_graphics("chapterFigures/chp1/fig13-01.png")
+```
+:::
+
+::: {.column width="50%"}
+<!-- **Southeast Season** -->
+```{r}
+#| out-width: "140%"
+knitr::include_graphics("chapterFigures/chp1/fig14-01.png")
+```
+:::
+
+::::
+
+
+
+
+# Data in Oceanography
+
+# The Bitter truth
+## Programming skills
+
+```{r}
+#| eval: false
+#| echo: true
+#| code-fold: show
+#| 
+ll.gam = mie.ll %>% 
+  st_centroid() %>% 
+  st_coordinates() %>% 
+  as_tibble() %>% 
+  rename(lon = 1, lat = 2) %>% 
+  bind_cols(
+    mie.ll  %>% st_drop_geometry()
+  ) %$% 
+  gam(nbObs ~ s(lon,lat)) %>% 
+  tidymv::predict_gam() %>% 
+  mutate(fit = if_else(fit <=0, NA, fit))
+
+
+ll.fig = ll.gam %>% 
+  ggplot(aes(x = lon, y = lat, z = fit)) +
+  metR::geom_contour_fill(bins = 120)+
+  metR::geom_contour2(aes(label = ..level..), breaks = c(1200,2800), skip = 0)+
+  ggspatial::layer_spatial(africa, fill = "#bea896")+  
+  ggspatial::layer_spatial(data = eez, linetype = 2, color = "#ff0831") + 
+  coord_sf(xlim = c(38,45), ylim = c(-11.5, -3.5))+
+  metR::scale_x_longitude(ticks = 2)+
+  metR::scale_y_latitude(ticks = 2) + 
+  scale_fill_gradientn(colours = hcl.colors(n = 120, palette = "Spectral") %>% rev(), 
+                       breaks = scales::pretty_breaks(n = 6), trans = scales::modulus_trans(p = 1.2),
+                       guide = guide_colorbar(title = "Density\n(Effort)",title.position = "top" , title.vjust = .5, title.theme = element_text(angle = 0), barwidth = .8, barheight = 8, reverse = T))+
+  theme_bw(base_size = 14) +
+  theme(axis.title = element_blank(), legend.position = c(.12,.3), legend.background = element_rect(colour = 1, linewidth = .2))
+
+ll.fig
+
+```
+
+
+# Coding for data access
+{{< video code1.mp4 >}}
+
+
+# Automate process
+{{< video code2.mp4 >}}
+
+
+# Insitu
+
+## In-Situ Data {.scrollable}
+  - Collected directly from oceanic measurements at specific locations.
+  - Examples: Temperature, salinity, pressure, velocity, dissolved oxygen, etc.
+  - Instruments: CTD profilers, moored buoys, tide gauges, drifting buoys, etc.
+- Satellite Data: Collected remotely using satellites orbiting Earth.
+  - Examples: Sea surface temperature, sea level, ocean color, winds, etc.
+  - Instruments: Radiometers, altimeters, scatterometers, etc.
+  
+## In-situ Data ....
+
+{{< video animate_surface_Current.mp4 >}}
+
+
+# CTD Profilers: {.scrollable}
+
+
+
+```{r}
+algoa = read_csv("f:/CTDs/ctd_tb/algoa_ctd.csv")
+```
+
+## CTD-raw Data  {.scrollable}
+
+- Measure conductivity, temperature, and depth profiles.
+
+```{r}
+algoa %>% 
+  dplyr::filter(pressure %in% seq(0,450,5) & lon == 40.76900) %>% 
+  select(-station, -time, -depth, -program, -conductivity)%>% 
+  gt::gt() %>% 
+  gt::opt_interactive(
+    use_search = TRUE,
+    # use_filters = TRUE,
+    use_resizers = TRUE,
+    use_highlight = TRUE,
+    use_compact_mode = TRUE,
+    use_text_wrapping = FALSE,
+    use_page_size_select = TRUE
+  ) %>% 
+  fmt_number(decimals = 2) |>
+  fmt_integer(pressure) |>
+  cols_label_with(
+    fn = ~ janitor::make_clean_names(., case = "all_caps")
+  ) |>
+  data_color(
+    columns = fluorescence,
+    palette = "Greens"
+  ) |>
+  data_color(
+    columns = oxygen,
+    palette = "Blues"
+  ) |>
+  data_color(
+    columns = temperature,
+    palette = "Reds"
+  )|>
+  data_color(
+    columns = salinity,
+    palette = "Purples"
+  )|>
+  # data_color(
+  #   columns = conductivity,
+  #   palette = "Reds"
+  # )|>
+  tab_style(
+    style = cell_fill(color = "gray95"),
+    locations = cells_body(columns = c(lon, lat, pressure))
+  ) |>
+  tab_style(
+    locations = cells_body(columns = salinity),
+    style = cell_text(weight = "bold")
+  ) 
+
+
+```
+
+## Profile plot
+
+
+```{r}
+oce::read.ctd("f:/CTDs/algoa/processing/stn046.cnv") %>% 
+  oce::ctdTrim(method = "downcast") %>% 
+  oce::plot()
+```
+## Section plot
+
+```{r}
+pemba %>% 
+  filter(pressure < 400) %>% 
+  ggplot(aes(x = lon, y = pressure, z = fluorescence))+
+  metR::geom_contour_fill()+
+  metR::geom_contour_fill(bins = 120)+
+  metR::geom_contour2(aes(label = ..level..), breaks = c(.5,1.2), skip = 0)+
+  scale_y_reverse(name = "Depth [m]")+
+  scale_fill_gradientn(colours = mycolor, name = expression(Chl~a~(mgm^{-3})), 
+                       guide = guide_colorbar(title.position = "top", label.position = "top", 
+                                              title.hjust = 0.5, barwidth = 8))+
+  metR::scale_x_longitude(ticks = .2, position = "top")+
+  theme_bw(base_size = 14) +
+  theme(legend.position = "top")
+```
+
+
+```{r, fig.width=6, fig.height=4.5}
+
+pemba = algoa %>% 
+  # distinct(lat) %>% 
+  filter(lat >= -7.039500)
+
+
+chl.sec = pemba %>% 
+  filter(pressure < 400) %>% 
+  ggplot(aes(x = lon, y = pressure, z = fluorescence))+
+  metR::geom_contour_fill()+
+  metR::geom_contour_fill(bins = 120)+
+  metR::geom_contour2(aes(label = ..level..), breaks = c(.5,1.2), skip = 0)+
+  scale_y_reverse(name = "Depth [m]")+
+  scale_fill_gradientn(colours = mycolor, name = "Chl-a")+
+  metR::scale_x_longitude(ticks = .2, position = "top")+
+  theme_bw(base_size = 14)
+
+temp.sec = pemba %>% 
+  filter(pressure < 400) %>% 
+  ggplot(aes(x = lon, y = pressure, z = temperature))+
+  metR::geom_contour_fill(bins = 120)+
+  metR::geom_contour2(aes(label = ..level..), breaks = c(19), skip = 0)+
+  scale_y_reverse(name = "Depth [m]")+
+  scale_fill_gradientn(colours = mycolor2, name = "Temp")+
+  metR::scale_x_longitude(ticks = .2, position = "top")+
+  theme_bw(base_size = 14)
+```
+
+
+```{r}
+#| fig-width: 7
+#| fig-height: 5
+#| 
+chl.sec / temp.sec
+
+
+```
+
+
+# Moored Buoys
+
+##  Moored Buoys
+
+:::: {.columns}
+::: {.column width="40%"}
+- Collect continuous data using sensors attached to fixed buoys.
++ Measure Physical (Temperature)
++ Chemical (pH)
++ Dissolved Oxygen
+:::
+
+::: {.column width="60%"}
+
+```{r}
+
+knitr::include_graphics("figures/sa_map-01.png")
+
+```
+
+:::
+
+::::
+
+
+## In-Situ: Moored Buoys ....
+
+```{r}
+
+knitr::include_graphics("figures/sa_hovmoller.png")
+
+```
+
+
+
+## In-Situ: Moored Buoys ....{.scrollable}
+
+
+:::: {.columns}
+::: {.column width="50%"}
+- TAFIRI deployed a Buoy in MOA-TANGA
++ High productive Area
++ Booming of sardine
++ Upwelling event hotspot
+:::
+
+::: {.column width="50%"}
+
+```{r}
+tza.mpa = mpa.clean %>% filter(country == "Tanzania")
+
+tmap_options(check.and.fix = TRUE)
+
+tm_shape(shp = tza.mpa %>% filter(name %in% c("Boma-Mahandakini", "Deep sea-Boma")), name = "MOA", ) +
+  tm_fill(col = "category", title = "MPA", id = "name", popup.vars = c("Designation" = "designatio"), alpha = .8, legend.show = FALSE)+
+  tm_borders(col = "red")
+
+
+
+```
+
+:::
+
+::::
+
+
+## In-Situ: Moored Buoys at Moa
+
+
+
+
+:::: {.columns}
+::: {.column width="40%"}
+```{r}
+tza.mpa = mpa.clean %>% filter(country == "Tanzania")
+
+tmap_options(check.and.fix = TRUE)
+
+tm_shape(shp = tza.mpa %>% filter(name %in% c("Boma-Mahandakini", "Deep sea-Boma")), name = "MOA", ) +
+  tm_fill(col = "category", title = "MPA", id = "name", popup.vars = c("Designation" = "designatio"), alpha = .8, legend.show = FALSE)+
+  tm_borders(col = "red")
+
+
+
+```
+
+:::
+
+::: {.column width="60%"}
+
+```{r}
+
+knitr::include_graphics("figures/moa.png")
+
+```
+:::
+
+::::
+
+
+
+## In-Situ: Tide Gauges: {.scrollable}
+
+
+:::: {.columns}
+::: {.column width="40%"}
+
+<!-- - Measure sea level changes over time. -->
+
+```{r}
+tidal = readxl::read_excel("f:/2023/tidal_tanesco/locations.xlsx") %>% 
+  janitor::clean_names() %>% 
+  select(-1)
+
+tidal %>% 
+  # DT::datatable(editable = TRUE) %>% 
+  gt::gt()
+ 
+```
+
+
+:::
+
+::: {.column width="60%"}
+
+```{r}
+
+knitr::include_graphics("figures/umeme.png")
+
+```
+:::
+
+::::
+
+
+## In-Situ: Tide Gauges: {.scrollable}
+
+```{r}
+knitr::include_graphics("figures/tides_states.png")
+```
+
+
+## In-Situ: Drifting Buoys: 
+- Move with ocean currents, measuring various parameters.
+
+
+## Sources of In-Situ Data
+- Research Institutions: Universities, government agencies, and scientific organizations.
+- Oceanographic Campaigns: Research vessels equipped with oceanographic instruments.
+- Global Databases: Integrated Ocean Observing System (IOOS), Argo program, etc.
+- Data Repositories: National Oceanic and Atmospheric Administration (NOAA), World Ocean Database (WOD), etc.
+
+# Satellite
+
+# Wind
+## Wind
+:::: {.columns}
+
+::: {.column width="60%"}
+
++ ASCAT wind data is  derived from radar measurements.
++ Every 12 hours
++ grid about 25km
+
+:::
+
+::: {.column width="40%"}
+
+```{r}
+wind.quik_season %>% 
+  FSA::headtail(n = 6) %>% 
+  gt::gt() %>% 
+  gt::opt_interactive()
+```
+
+:::
+
+::::
+
+## Seasonal Wind Patterns ....
+
+:::: {.columns}
+
+::: {.column width="50%"}
+
+<!-- **Northeast Season** -->
+
+```{r}
+#| warning: false
+#| message: false
+#| fig-height: 6
+#| crop: true
+#| eval: false
+#| 
+
+ne.df = wind.quik_season %>% filter(season == "NE")
+
+wind.ne = ggplot()+
+  metR::geom_contour_fill(
+    data = ne.df, 
+    aes(x = longitude, y = latitude, z = speed)
+    )+
+  metR::geom_vector(
+    data = ne.df,
+    aes(x = longitude, y = latitude, dx =x_wind, dy = y_wind ),
+    skip = 12, min.mag = 0,preserve.dir = TRUE, pivot = .5, arrow.type = "open", 
+    arrow.angle = 20, size = 0.25 )+
+  geom_sf(data = africa, fill = "#bea896", color = "black")+
+  coord_sf(xlim = c(30,65), ylim = c(-35,10))+
+   scale_fill_gradientn(colours =  mycolor2, limits = c(0,16),
+                       trans = scales::sqrt_trans(),
+                       breaks = scales::pretty_breaks(n = 6),
+                       guide = guide_colorbar(
+                         barwidth = unit(.16,"in"),
+                         barheight = unit(2,"in"),
+                         label.position = "right",
+                         title.position = "right", 
+                         title.theme = element_text(angle = 90, size = 11), title.hjust = .75,
+                         label.theme = element_text(size = 10),
+                         title = expression(Wind~speed~(ms^{-1})
+                                            )
+                         )
+                       )+
+  metR::scale_mag(name = "Magnitude", max = 15, guide = "none") +
+  theme_bw()  +
+  theme(strip.background = element_blank(), axis.title = element_blank(), 
+        legend.position = c(.15,.75), 
+        legend.background = element_rect(colour = "black", linewidth = .1),
+        plot.background = element_blank(), axis.text = element_blank(), 
+        axis.ticks = element_blank())
+
+```
+:::
+
+::: {.column width="50%"}
+
+<!-- **Southeast Season** -->
+```{r}
+#| warning: false
+#| message: false
+#| fig-height: 6
+#| crop: true
+#| eval: false
+#| 
+
+
+se.df = wind.quik_season %>% filter(season == "SE")
+
+wind.se = ggplot()+
+  metR::geom_contour_fill(
+    data = se.df, 
+    aes(x = longitude, y = latitude, z = speed)
+    )+
+  metR::geom_vector(
+    data = se.df,
+    aes(x = longitude, y = latitude, dx =x_wind, dy = y_wind ),
+    skip = 12, min.mag = 0,preserve.dir = TRUE, pivot = .5, arrow.type = "open", 
+    arrow.angle = 20, size = 0.25 )+
+  geom_sf(data = africa, fill = "#bea896", color = "black")+
+  coord_sf(xlim = c(30,65), ylim = c(-35,10))+
+   scale_fill_gradientn(colours =  mycolor2, limits = c(0,16),
+                       trans = scales::sqrt_trans(),
+                       breaks = scales::pretty_breaks(n = 6),
+                       guide = guide_colorbar(
+                         barwidth = unit(.16,"in"),
+                         barheight = unit(2,"in"),
+                         label.position = "right",
+                         title.position = "right", 
+                         title.theme = element_text(angle = 90, size = 11), title.hjust = .5,
+                         label.theme = element_text(size = 10),
+                         title = expression(Wind~speed~(ms^{-1})
+                                            )
+                         )
+                       )+
+  metR::scale_mag(name = "Magnitude", max = 15, guide = "none") +
+  theme_bw()  +
+  theme(strip.background = element_blank(), axis.title = element_blank(), 
+        legend.position = c(.15,.75), 
+        legend.background = element_rect(colour = "black", linewidth = .1),
+        plot.background = element_blank(), axis.text = element_blank(), 
+        axis.ticks = element_blank())
+
+```
+
+:::
+
+::::
+
+```{r}
+#| eval: false
+#| 
+wind.ne + wind.se
+ggsave("figures/wind_season.pdf",width = 7)
+```
+```{r}
+#| out-width: "100%"
+knitr::include_graphics("figures/wind_season-01.png")
+```
+
+
+## Getting Wind Data
+
+```{r}
+#| eval: false
+#| echo: true
+#| code-fold: show
+#| 
+wind = wior::get_windAscat(
+  lon.min = 28, lon.max = 50, 
+  lat.min = -20, lat.max = 2, 
+  t1 = "2015-01-01", t2 = "2015-12-30", 
+  level = 2
+  )
+
+wind = wind %>% 
+  dplyr::mutate(month = lubridate::month(time, label = TRUE)) 
+```
+
+
+
+# Sea Surface Temperature (SST) 
+
+## Sea Surface Temperature (SST) ...
+
++ SST stands for Sea Surface Temperature. It refers to the measurement of the temperature of the uppermost layer of the ocean's surface. 
+
++ Global warming and SST
++ Elevated SST and coral bleaching events
++ SST and weather event (EL-Nino/La-Nina)
+
+```{r}
+#| eval: false
+sst %>% 
+  write_csv("sst.csv")
+```
+
+
+```{r}
+#| eval: false
+jan = sst %>% dplyr::filter(month == "Aug") 
+
+quik1 = jan %>% pull(sst) %>%   quantile(c(.01,.99), na.rm = TRUE)
+
+se = ggplot(data = jan) +
+  metR::geom_contour_fill(aes(x = longitude, y = latitude, z = sst), bins = 40)+
+  ggspatial::layer_spatial(data = africa) +
+  coord_sf(xlim = c(35,49), ylim = c(-19,1))+
+  scale_fill_gradientn(colours = hcl.colors(n = 12, palette = "Spectral") %>% rev(), 
+                       limits = c(quik1[1], quik1[2]), 
+                       trans = scales::sqrt_trans(), breaks = scales::pretty_breaks(n = 6),
+                       guide = guide_colorbar(barwidth = .8, barheight = 12, title.position = "right",
+                                              title.theme = element_text(angle = 90), title.hjust = .5, 
+                                              title = expression(Temperature~(degree*C))))+
+  theme_bw() +
+  theme(legend.position = c(.18,.45), legend.background = element_rect(fill = "grey90"), 
+        axis.title = element_blank())
+
+dec = sst %>% dplyr::filter(month == "Dec") 
+
+quik2 = dec %>% pull(sst) %>%   quantile(c(.01,.99), na.rm = TRUE)
+
+ne = ggplot(data = dec) +
+  metR::geom_contour_fill(aes(x = longitude, y = latitude, z = sst), bins = 40)+
+  ggspatial::layer_spatial(data = africa) +
+  coord_sf(xlim = c(35,49), ylim = c(-19,1))+
+  scale_fill_gradientn(colours = hcl.colors(n = 12, palette = "Spectral") %>% rev, limits = c(28.1, 31.82), 
+                       trans = scales::sqrt_trans(), breaks = scales::pretty_breaks(n = 6),
+                       guide = guide_colorbar(barwidth = .8, barheight = 12, title.position = "right",
+                                              title.theme = element_text(angle = 90), title.hjust = .5, 
+                                              title = expression(Temperature~(degree*C))))+
+  theme_bw() +
+  theme(legend.position = c(.18,.45), legend.background = element_rect(fill = "grey90"), 
+        axis.title = element_blank())
+  
+```
+
+
+```{r, fig.width=8}
+#| eval: false
+ne + se
+
+ggsave("figures/sst_ne_se.pdf", width = 8, dpi = 300)
+
+```
+
+## Sea Surface Temperature (SST) ...
+
+```{r}
+#| out-width: "100%"
+knitr::include_graphics("figures/sst_ne_se.png")
+```
+
+
+## Access SST data ....
+
+```{r}
+#| eval: false
+#| echo: true
+#| code-fold: show
+#| 
+sst = wior::get_sstMODIS(
+  lon.min = 28, lon.max = 50, 
+  lat.min = -20, lat.max = 2, 
+  t1 = "2015-01-01", t2 = "2015-12-30", 
+  level = 3
+  )
+
+sst = sst %>% 
+  dplyr::mutate(month = lubridate::month(time, label = TRUE)) 
+
+sst %>% 
+  write_csv("sst.csv")
+```
+
+
+# Surface Drifters
+## Surface Drifters
++ Drifter data refers to measurements collected from drifting buoys deployed in oceans
++ Drifters measure surface currents, temperature, salinity, and other oceanographic parameters, 
++ providing valuable insights into ocean circulation patterns, climate research, and marine ecosystem dynamics.
+
+## Surface Drifters
+```{r}
+##load drogue corrected drifter
+drifter = read_table2("f:/thesisTypeset/drifter_datasets/pemba_drifters.txt", col_names = FALSE)
+
+## insert variable names
+drifter = drifter %>% 
+  select(id = X1, lon = X2, lat = X3, year= X8, month =   X9, 
+         day =  X10, hour = X11, drogue = X4, u =X5, v = X6,   sst = X7)
+```
+
+
+```{r}
+require(gt)
+
+drifter %>% 
+  sample_n(size = 18) %>% 
+  select(-c(id, drogue, day, hour, month, sst)) %>% 
+  mutate(across(is.character, as.numeric), 
+         speed = sqrt(u^2+v^2)) %>% 
+  relocate(speed, .after = v) %>% 
+  gt::gt()%>% 
+  gt::opt_interactive(
+    use_search = TRUE,
+    # use_filters = TRUE,
+    use_resizers = TRUE,
+    use_highlight = TRUE,
+    use_compact_mode = TRUE,
+    use_text_wrapping = FALSE,
+    use_page_size_select = TRUE
+  ) %>% 
+  fmt_number(decimals = 3) |>
+  fmt_integer(year) |>
+  cols_label_with(
+    fn = ~ janitor::make_clean_names(., case = "all_caps")
+  ) |>
+  data_color(
+    columns = u,
+    palette = "Greens"
+  ) |>
+  data_color(
+    columns = v,
+    palette = "Blues"
+  ) |>
+  data_color(
+    columns = speed,
+    palette = "Reds"
+  )|>
+  tab_style(
+    style = cell_fill(color = "gray95"),
+    locations = cells_body(columns = c(lon, lat))
+  ) |>
+  tab_style(
+    locations = cells_body(columns = speed),
+    style = cell_text(weight = "bold")
+  ) 
+
+```
+
+
+# Drifter poorly sampled in WIO {background-image="figures/driftes_distribution.png"}
+
+```{r}
+#| eval: false
+#| 
+knitr::include_graphics("figures/driftes_distribution.png")
+```
+
+
+## Drifter current
+
+```{r}
+knitr::include_graphics("chapterFigures/chp4/fig42-01.png")
+```
+
+
+# Biological Data: Tuna Fisheries
+## Density of Fishing Effort
+
+```{r}
+#| out-width: "100%"
+#| 
+knitr::include_graphics("figures/density_ll_ps-01.png")
+```
+
+## Density of Fishing Effort
+
+```{r}
+#| out-width: "100%"
+#| 
+knitr::include_graphics("figures/density_catch_rate_yf_bg-01.png")
+```
+
+
+
+
+# Interactive Tool Demo {background-image="figures/Screenshot 2023-05-22 091118.png"}
+

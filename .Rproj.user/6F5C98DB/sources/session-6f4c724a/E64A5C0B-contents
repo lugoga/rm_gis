@@ -1,0 +1,85 @@
+@article{sf,
+    author = {Edzer Pebesma},
+    title = {{Simple Features for R: Standardized Support for Spatial Vector Data}},
+    year = {2018},
+    journal = {{The R Journal}},
+    doi = {10.32614/RJ-2018-009},
+    url = {https://doi.org/10.32614/RJ-2018-009},
+    pages = {439--446},
+    volume = {10},
+    number = {1},
+  }
+
+@manual{terra,
+    title = {terra: Spatial Data Analysis},
+    author = {Robert J. Hijmans},
+    year = {2023},
+    note = {R package version 1.7-37},
+    url = {https://CRAN.R-project.org/package=terra},
+  }
+
+@article{tidyverse,
+    title = {Welcome to the {tidyverse}},
+    author = {Hadley Wickham and Mara Averick and Jennifer Bryan and Winston Chang and Lucy D'Agostino McGowan and Romain François and Garrett Grolemund and Alex Hayes and Lionel Henry and Jim Hester and Max Kuhn and Thomas Lin Pedersen and Evan Miller and Stephan Milton Bache and Kirill Müller and Jeroen Ooms and David Robinson and Dana Paige Seidel and Vitalie Spinu and Kohske Takahashi and Davis Vaughan and Claus Wilke and Kara Woo and Hiroaki Yutani},
+    year = {2019},
+    journal = {Journal of Open Source Software},
+    volume = {4},
+    number = {43},
+    pages = {1686},
+    doi = {10.21105/joss.01686},
+  }
+
+ @manual{rlanguage,
+    title = {R: A Language and Environment for Statistical Computing},
+    author = {{R Core Team}},
+    organization = {R Foundation for Statistical Computing},
+    address = {Vienna, Austria},
+    year = {2023},
+    url = {https://www.R-project.org/},
+  }
+
+@manual{tidyterra,
+    title = {{tidyterra}: tidyverse Methods and ggplot2 Helpers for terra Objects},
+    doi = {10.5281/zenodo.6572471},
+    author = {Diego Hernangómez},
+    year = {2023},
+    version = {0.4.0},
+    url = {https://dieghernan.github.io/tidyterra/},
+    abstract = {Extension of the tidyverse for SpatRaster and SpatVector objects of the terra package. It includes also new geom_ functions that provide a convenient way of visualizing terra objects with ggplot2.},
+  }
+
+@book{ggplot,
+    author = {Hadley Wickham},
+    title = {ggplot2: Elegant Graphics for Data Analysis},
+    publisher = {Springer-Verlag New York},
+    year = {2016},
+    isbn = {978-3-319-24277-4},
+    url = {https://ggplot2.tidyverse.org},
+  }
+
+
+@Manual{wior,
+    title = {wior: Easy Tidy and Process Oceanographic Data},
+    author = {Masumbuko Semba and Nyamisi Peter},
+    year = {2023},
+    note = {R package version 0.0.0.9000},
+    url = {https://github.com/lugoga/wior},
+  }
+
+
+@misc{geomarine,
+	author = {Masumbuko Semba},
+	title = {{P}ractical {S}patial {D}ata --- lugoga.github.io},
+	howpublished = {\url{https://lugoga.github.io/geomarine/}},
+	year = {},
+	note = {[Accessed 23-Jun-2023]},
+}
+
+
+@misc{geospatial,
+	author = {Masumbuko Semba and Nyamisi Peter and Benjamini Andrew},
+	title = {{G}eospatial {T}echnology and {S}patial {A}nalysis in {R} --- lugoga.github.io},
+	howpublished = {\url{https://lugoga.github.io/spatialgoR/}},
+	year = {},
+	note = {[Accessed 23-Jun-2023]},
+}
